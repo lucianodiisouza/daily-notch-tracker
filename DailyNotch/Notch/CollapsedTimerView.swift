@@ -1,50 +1,64 @@
 import SwiftUI
 
-/// Collapsed pill: countdown on the left, active task on the right, blue
-/// progress bar hugging the bottom edge. When idle it's just the bare notch.
+/// Collapsed pill. When a focus session is running it shows the countdown in
+/// the LEFT ear and the active task in the RIGHT ear, with a hard center gap
+/// the exact width of the hardware notch so nothing hides under the camera.
+/// When idle it's just the bare notch footprint (invisible).
 struct CollapsedTimerView: View {
     @EnvironmentObject private var vm: NotchViewModel
     @EnvironmentObject private var focus: FocusTimer
 
     var body: some View {
-        VStack(spacing: 0) {
-            if focus.isActive {
-                HStack(spacing: 8) {
-                    Image(systemName: "clock.arrow.circlepath")
-                        .font(.system(size: 12, weight: .medium))
-                        .foregroundStyle(Theme.textSecondary)
-                    Text(focus.timeLabel)
-                        .font(.system(size: 15, weight: .semibold, design: .rounded))
-                        .foregroundStyle(Theme.textPrimary)
-                        .monospacedDigit()
+        if focus.isActive {
+            VStack(spacing: 0) {
+                // ---- ears (aligned to the notch height) ----
+                HStack(spacing: 0) {
+                    // left ear: countdown, pushed toward the notch
+                    HStack(spacing: 6) {
+                        Image(systemName: "clock.arrow.circlepath")
+                            .font(.system(size: 11, weight: .medium))
+                            .foregroundStyle(Theme.textSecondary)
+                        Text(focus.timeLabel)
+                            .font(.system(size: 15, weight: .semibold, design: .rounded))
+                            .foregroundStyle(Theme.textPrimary)
+                            .monospacedDigit()
+                    }
+                    .frame(width: vm.activeEarWidth, alignment: .trailing)
+                    .padding(.trailing, 12)
 
-                    Spacer(minLength: 8)
+                    // center: the physical notch — must stay empty
+                    Color.clear.frame(width: vm.notchWidth)
 
-                    Text(focus.activeTask?.title ?? "")
-                        .font(.system(size: 12, weight: .medium))
-                        .foregroundStyle(Theme.textSecondary)
-                        .lineLimit(1)
-                    Image(systemName: "sparkles")
-                        .font(.system(size: 11))
-                        .foregroundStyle(Theme.accent)
+                    // right ear: active task title
+                    HStack(spacing: 6) {
+                        Text(focus.activeTask?.title ?? "")
+                            .font(.system(size: 12, weight: .medium))
+                            .foregroundStyle(Theme.textSecondary)
+                            .lineLimit(1)
+                        Image(systemName: "sparkles")
+                            .font(.system(size: 11))
+                            .foregroundStyle(Theme.accent)
+                    }
+                    .frame(width: vm.activeEarWidth, alignment: .leading)
+                    .padding(.leading, 12)
                 }
-                .padding(.horizontal, 14)
-                .frame(maxHeight: .infinity)
+                .frame(height: vm.notchHeight)
 
-                // progress bar along the bottom
+                // ---- progress bar, below the notch line so it stays visible ----
                 GeometryReader { geo in
                     ZStack(alignment: .leading) {
-                        Capsule().fill(Color.white.opacity(0.08))
+                        Capsule().fill(Color.white.opacity(0.10))
                         Capsule().fill(Theme.accent)
                             .frame(width: max(4, geo.size.width * focus.progress))
                     }
                 }
                 .frame(height: 3)
-                .padding(.horizontal, 10)
-                .padding(.bottom, 4)
-            } else {
-                Color.clear   // bare notch when nothing is running
+                .padding(.horizontal, 12)
+                .padding(.bottom, 6)
+                .padding(.top, 4)
             }
+        } else {
+            Color.clear
         }
     }
 }

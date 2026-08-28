@@ -22,11 +22,21 @@ final class NotchViewModel: ObservableObject {
 
     // MARK: Layout targets (points)
 
-    var collapsedHeight: CGFloat { metrics.notchHeight + 4 }
-    var expandedHeight: CGFloat { 232 }
+    /// Real hardware notch footprint — content must never sit inside this.
+    var notchWidth: CGFloat { metrics.notchWidth }
+    var notchHeight: CGFloat { metrics.notchHeight }
+
+    /// Width of each "ear" flanking the notch in the collapsed active pill.
+    let activeEarWidth: CGFloat = 158
+
+    var collapsedHeight: CGFloat {
+        focus.isActive ? notchHeight + 16 : notchHeight + 4
+    }
+    var expandedHeight: CGFloat { 258 }
 
     var collapsedWidth: CGFloat {
-        focus.isActive ? 420 : metrics.notchWidth + 24
+        // Idle: hug the notch exactly (invisible). Active: notch + two ears.
+        focus.isActive ? notchWidth + activeEarWidth * 2 : notchWidth
     }
     var expandedWidth: CGFloat { 620 }
 
