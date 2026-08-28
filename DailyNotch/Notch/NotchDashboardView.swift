@@ -5,15 +5,19 @@ struct NotchDashboardView: View {
     @EnvironmentObject private var vm: NotchViewModel
 
     var body: some View {
-        HStack(alignment: .top, spacing: 14) {
+        HStack(alignment: .top, spacing: 16) {
             TodoPanel()
                 .frame(maxWidth: .infinity, alignment: .leading)
+            Rectangle()
+                .fill(Color.white.opacity(0.07))
+                .frame(width: 1)
             StreakHeatmap()
-                .frame(width: 250, alignment: .topLeading)
+                .frame(width: 244, alignment: .topLeading)
         }
-        .padding(.horizontal, 16)
-        .padding(.top, 14)
-        .padding(.bottom, 14)
+        .padding(.horizontal, 18)
+        // Clear the physical notch: content starts below the notch height.
+        .padding(.top, vm.notchHeight + 6)
+        .padding(.bottom, 16)
     }
 }
 
