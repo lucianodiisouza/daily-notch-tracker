@@ -12,7 +12,7 @@ struct RootNotchView: View {
                 .fill(Theme.pill)
                 .overlay(
                     NotchShape()
-                        .stroke(Theme.accent.opacity(vm.expanded ? 0.9 : 0), lineWidth: 1.5)
+                        .stroke(Theme.accent.opacity(vm.expanded ? 1 : 0), lineWidth: 2)
                 )
 
             Group {
