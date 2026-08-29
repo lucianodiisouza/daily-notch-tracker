@@ -38,6 +38,12 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             self?.focus.stopIfActive(id, record: record)
         }
 
+        // If the user has notifications on, request authorization on launch so
+        // the system prompt is out of the way before the first focus block.
+        if store.settings.notificationsEnabled {
+            NotificationService.shared.requestAuthorizationIfNeeded()
+        }
+
         // Cmd+Shift+Space: toggle the active focus session from anywhere.
         hotkey.register(
             keyCode: UInt32(kVK_Space),

@@ -38,6 +38,9 @@ final class FocusTimer: ObservableObject {
     /// the user just wants to start a session without a specific task.
     func start(durationMinutes: Int, task: Task? = nil) {
         stop(record: state != .idle)   // wrap up any prior block first
+        if store.settings.notificationsEnabled {
+            NotificationService.shared.requestAuthorizationIfNeeded()
+        }
         activeTask = task
         total = TimeInterval(max(1, durationMinutes) * 60)
         remaining = total
@@ -77,8 +80,12 @@ final class FocusTimer: ObservableObject {
     }
 
     private func complete() {
+        let taskTitle = activeTask?.title
         finishSession(completed: true)
-        NSSound.beep()
+        if store.settings.playSound { NSSound.beep() }
+        if store.settings.notificationsEnabled {
+            NotificationService.shared.postFocusComplete(taskTitle: taskTitle)
+        }
         reset()
     }
 
