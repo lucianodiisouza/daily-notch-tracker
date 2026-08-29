@@ -101,6 +101,15 @@ private struct TodoRow: View {
             }
             Spacer(minLength: 6)
 
+            // Estimate pill — lets you eyeball the quick vs. heavy tasks at a glance.
+            HStack(spacing: 3) {
+                Image(systemName: "clock").font(.system(size: 9))
+                Text(task.estimateLabel).font(.system(size: 10, weight: .medium))
+            }
+            .foregroundStyle(Theme.textSecondary)
+            .padding(.horizontal, 7).padding(.vertical, 3)
+            .background(Color.white.opacity(0.06), in: Capsule())
+
             Button {
                 if isRunningThis { focus.togglePause() } else { focus.start(task: task) }
             } label: {
