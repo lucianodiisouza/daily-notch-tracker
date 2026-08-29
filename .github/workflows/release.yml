@@ -74,6 +74,7 @@ jobs:
           ls -la "${STAGE}"
 
       - name: Create DMG
+        id: create_dmg
         run: |
           STAGE="dmg-staging"
           OUT="DailyNotch-${{ steps.version.outputs.version }}.dmg"
@@ -98,7 +99,7 @@ jobs:
           trap 'rm -f "${KEY_FILE}"' EXIT
           printf '%s' "${AC_API_KEY_P8}" > "${KEY_FILE}"
 
-          DMG="${{ steps.version.outputs.dmg }}"
+          DMG="${{ steps.create_dmg.outputs.dmg }}"
           xcrun notarytool submit "${DMG}" \
             --key "${KEY_FILE}" \
             --key-id "${AC_API_KEY_ID}" \
@@ -114,6 +115,6 @@ jobs:
           generate_release_notes: true
           draft: false
           prerelease: ${{ contains(steps.version.outputs.version, '-') }}
-          files: ${{ steps.version.outputs.dmg }}
+          files: ${{ steps.create_dmg.outputs.dmg }}
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
