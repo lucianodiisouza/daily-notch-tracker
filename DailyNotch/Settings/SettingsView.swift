@@ -29,6 +29,12 @@ struct SettingsView: View {
             section("APPEARANCE") {
                 toggleRow("Show progress timeline on the notch",
                           isOn: $store.settings.showTimeline)
+                divider
+                toggleRow("RGB glow timeline (override accent color)",
+                          isOn: $store.settings.rainbowTimeline)
+                divider
+                toggleRow("Minimal mode (hide time + task name)",
+                          isOn: $store.settings.minimalMode)
             }
             section("STARTUP") {
                 toggleRow("Launch DailyNotch at login",
