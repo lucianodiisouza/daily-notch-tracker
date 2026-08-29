@@ -82,6 +82,13 @@ final class FocusTimer: ObservableObject {
         reset()
     }
 
+    /// Stop the timer only if the running session belongs to `id` (task completed
+    /// or deleted). No-op otherwise.
+    func stopIfActive(_ id: UUID, record: Bool) {
+        guard isActive, activeTask?.id == id else { return }
+        stop(record: record)
+    }
+
     private func finishSession(completed: Bool) {
         guard let startedAt else { return }
         let session = FocusSession(taskId: activeTask?.id,

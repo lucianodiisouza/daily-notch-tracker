@@ -27,7 +27,8 @@ struct TodoPanel: View {
     @EnvironmentObject private var store: Store
     @EnvironmentObject private var focus: FocusTimer
 
-    private var todays: [Task] { store.tasks(on: Date()) }
+    // Completed tasks drop out of the notch stack — only what's left to do.
+    private var todays: [Task] { store.tasks(on: Date()).filter { !$0.isDone } }
 
     var body: some View {
         VStack(alignment: .leading, spacing: 8) {

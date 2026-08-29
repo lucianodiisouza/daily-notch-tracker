@@ -27,6 +27,12 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     func applicationDidFinishLaunching(_ notification: Notification) {
         NSApp.setActivationPolicy(.accessory)   // no Dock icon; lives in the notch
 
+        // Completing or deleting a task must stop its running session so the
+        // collapsed pill's progress line resets instead of running on.
+        store.onTaskDeactivated = { [weak self] id, record in
+            self?.focus.stopIfActive(id, record: record)
+        }
+
         let vm = NotchViewModel(store: store, focus: focus, metrics: .primary)
         vm.openTasksWindow = { [weak self] in self?.showTasksWindow() }
         viewModel = vm

@@ -11,6 +11,12 @@ final class Store: ObservableObject {
     /// Routing bus: set to a task id to request the Tasks window open its detail.
     @Published var pendingOpenTaskID: UUID?
 
+    /// Called when a task is completed or deleted so dependents (the focus timer)
+    /// can stop any running session for it. Wired up by the app. `record` says
+    /// whether the in-flight session should still be persisted (true on complete,
+    /// false on delete — a deleted task has nowhere to count time against).
+    var onTaskDeactivated: (_ id: UUID, _ record: Bool) -> Void = { _, _ in }
+
     private let fileURL: URL
 
     init() {
@@ -38,6 +44,9 @@ final class Store: ObservableObject {
     }
 
     func delete(_ task: Task) {
+        // Drop any running timer for this task first, without recording time
+        // against a task that's about to disappear.
+        onTaskDeactivated(task.id, false)
         tasks.removeAll { $0.id == task.id }
         save()
     }
@@ -45,6 +54,9 @@ final class Store: ObservableObject {
     func toggleDone(_ task: Task) {
         guard let idx = tasks.firstIndex(where: { $0.id == task.id }) else { return }
         tasks[idx].isDone.toggle()
+        // Completing a task stops its running session (resets the progress line)
+        // and keeps the focus time it earned.
+        if tasks[idx].isDone { onTaskDeactivated(task.id, true) }
         save()
     }
 
