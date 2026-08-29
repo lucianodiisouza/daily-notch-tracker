@@ -8,6 +8,9 @@ final class Store: ObservableObject {
     @Published var tasks: [Task] = []
     @Published var sessions: [FocusSession] = []
 
+    /// Routing bus: set to a task id to request the Tasks window open its detail.
+    @Published var pendingOpenTaskID: UUID?
+
     private let fileURL: URL
 
     init() {

@@ -11,6 +11,7 @@ struct TasksWindowView: View {
     @State private var showAddForm = false
     @State private var draftTitle = ""
     @State private var draftNotes = ""
+    @State private var editingTask: Task?
 
     enum Tab: String, CaseIterable { case day = "Day", unscheduled = "Unscheduled" }
 
@@ -61,7 +62,7 @@ struct TasksWindowView: View {
                 ScrollView {
                     VStack(spacing: 8) {
                         ForEach(listedTasks) { task in
-                            TaskRow(task: task)
+                            TaskRow(task: task) { editingTask = task }
                         }
                     }
                 }
@@ -89,6 +90,21 @@ struct TasksWindowView: View {
         .frame(minWidth: 760, minHeight: 480)
         .background(Color.black)
         .preferredColorScheme(.dark)
+        .sheet(item: $editingTask) { task in
+            TaskDetailView(task: task)
+                .environmentObject(store)
+                .environmentObject(focus)
+        }
+        .onAppear { consumePendingOpen() }
+        .onChange(of: store.pendingOpenTaskID) { _, _ in consumePendingOpen() }
+    }
+
+    /// Open the detail sheet when the dashboard requested a specific task.
+    private func consumePendingOpen() {
+        guard let id = store.pendingOpenTaskID,
+              let task = store.tasks.first(where: { $0.id == id }) else { return }
+        editingTask = task
+        store.pendingOpenTaskID = nil
     }
 
     private var headerTitle: String {

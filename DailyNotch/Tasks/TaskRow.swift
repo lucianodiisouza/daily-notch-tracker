@@ -1,13 +1,13 @@
 import SwiftUI
 
 /// A row in the Tasks window: checkbox, title, due chip, estimate, and
-/// start / edit / delete controls.
+/// start / delete controls. Tapping the row opens the task's detail sheet.
 struct TaskRow: View {
     let task: Task
+    var onOpen: () -> Void = {}
+
     @EnvironmentObject private var store: Store
     @EnvironmentObject private var focus: FocusTimer
-    @State private var editing = false
-    @State private var editTitle = ""
 
     private var isRunningThis: Bool { focus.isActive && focus.activeTask?.id == task.id }
 
@@ -21,18 +21,11 @@ struct TaskRow: View {
             .buttonStyle(.plain)
 
             VStack(alignment: .leading, spacing: 2) {
-                if editing {
-                    TextField("Title", text: $editTitle, onCommit: commitEdit)
-                        .textFieldStyle(.plain)
-                        .font(.system(size: 13, weight: .semibold))
-                        .foregroundStyle(Theme.textPrimary)
-                } else {
-                    Text(task.title)
-                        .font(.system(size: 13, weight: .semibold))
-                        .foregroundStyle(Theme.textPrimary)
-                        .strikethrough(task.isDone)
-                        .lineLimit(1)
-                }
+                Text(task.title)
+                    .font(.system(size: 13, weight: .semibold))
+                    .foregroundStyle(Theme.textPrimary)
+                    .strikethrough(task.isDone)
+                    .lineLimit(1)
                 if !task.notes.isEmpty {
                     Text(task.notes)
                         .font(.system(size: 11))
@@ -53,11 +46,12 @@ struct TaskRow: View {
                        bg: isRunningThis && focus.state == .running ? Theme.danger : Theme.accent) {
                 if isRunningThis { focus.togglePause() } else { focus.start(task: task) }
             }
-            iconButton("pencil", bg: .clear, fg: Theme.textSecondary) { beginEdit() }
             iconButton("trash", bg: .clear, fg: Theme.textSecondary) { store.delete(task) }
         }
         .padding(10)
         .background(Theme.panel, in: RoundedRectangle(cornerRadius: 12))
+        .contentShape(RoundedRectangle(cornerRadius: 12))
+        .onTapGesture { onOpen() }
     }
 
     private func chip(icon: String, text: String) -> some View {
@@ -80,17 +74,5 @@ struct TaskRow: View {
                 .background(bg, in: Circle())
         }
         .buttonStyle(.plain)
-    }
-
-    private func beginEdit() {
-        editTitle = task.title
-        editing = true
-    }
-
-    private func commitEdit() {
-        var updated = task
-        updated.title = editTitle
-        store.update(updated)
-        editing = false
     }
 }
