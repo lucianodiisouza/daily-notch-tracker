@@ -34,4 +34,28 @@ final class NotificationService {
             trigger: nil)   // deliver immediately
         UNUserNotificationCenter.current().add(request, withCompletionHandler: nil)
     }
+
+    /// Post a notification when a Pomodoro phase transitions. The body hints
+    /// at what's next so the user can decide whether to keep going.
+    func postPomodoroPhase(phase: PomodoroEngine.Phase) {
+        let content = UNMutableNotificationContent()
+        switch phase {
+        case .work:
+            content.title = "Break over"
+            content.body = "Back to focus."
+        case .shortBreak:
+            content.title = "Focus block done"
+            content.body = "Take a short break."
+        case .longBreak:
+            content.title = "Cycle complete"
+            content.body = "Nice work — enjoy a longer break."
+        }
+        content.sound = .default
+
+        let request = UNNotificationRequest(
+            identifier: "pomodoro.phase.\(UUID().uuidString)",
+            content: content,
+            trigger: nil)
+        UNUserNotificationCenter.current().add(request, withCompletionHandler: nil)
+    }
 }
