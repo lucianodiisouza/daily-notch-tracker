@@ -24,5 +24,9 @@
     <true/>
     <key>NSHumanReadableCopyright</key>
     <string>MIT Licensed</string>
+    <key>NSCalendarsFullAccessUsageDescription</key>
+    <string>DailyNotch shows today's events next to your tasks. It only reads your calendar and never writes to it.</string>
+    <key>NSCalendarsUsageDescription</key>
+    <string>DailyNotch shows today's events next to your tasks. It only reads your calendar and never writes to it.</string>
 </dict>
 </plist>
