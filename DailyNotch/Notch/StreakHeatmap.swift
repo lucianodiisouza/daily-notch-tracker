@@ -7,15 +7,37 @@ import SwiftUI
 struct StreakHeatmap: View {
     @EnvironmentObject private var store: Store
 
-    private let cell: CGFloat = 24
-    private let gap: CGFloat = 6
+    static let cell: CGFloat = 24
+    static let gap: CGFloat = 6
+    private var cell: CGFloat { Self.cell }
+    private var gap: CGFloat { Self.gap }
     private let radius: CGFloat = 5
-    private let rows = 6            // reserve 6 week-rows so height never jumps
 
-    private var cal: Calendar {
+    /// Only draw the weeks up to and including today's — trailing weeks of the
+    /// month sit in the future and would render as a fully-blank row, leaving
+    /// dead space at the bottom of the panel.
+    private var rows: Int { Self.weekRows(for: Date()) }
+
+    private static var cal: Calendar {
         var c = Calendar.current
         c.firstWeekday = 2   // Monday
         return c
+    }
+    private var cal: Calendar { Self.cal }
+
+    /// Number of Monday-first week-rows needed to show the current month from
+    /// its 1st through `date` (today). Shared with the panel's height calc.
+    static func weekRows(for date: Date) -> Int {
+        let today = cal.startOfDay(for: date)
+        let firstOfMonth = cal.date(from: cal.dateComponents([.year, .month], from: today))!
+        let leading = (cal.component(.weekday, from: firstOfMonth) + 5) % 7
+        let dayIndex = cal.dateComponents([.day], from: firstOfMonth, to: today).day ?? 0
+        return (leading + dayIndex) / 7 + 1
+    }
+
+    /// Pixel height of an `n`-row grid including inter-row gaps.
+    static func gridHeight(rows n: Int) -> CGFloat {
+        CGFloat(n) * cell + CGFloat(max(0, n - 1)) * gap
     }
 
     var body: some View {
