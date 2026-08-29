@@ -10,8 +10,6 @@ struct DailyNotchApp: App {
         MenuBarExtra("DailyNotch", systemImage: "hourglass.circle") {
             Button("Open Tasks…") { appDelegate.showTasksWindow() }
                 .keyboardShortcut("t")
-            Button("Settings…") { appDelegate.showSettingsWindow() }
-                .keyboardShortcut(",")
             Divider()
             Button("Quit DailyNotch") { NSApp.terminate(nil) }
                 .keyboardShortcut("q")
