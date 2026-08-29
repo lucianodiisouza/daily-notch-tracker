@@ -214,22 +214,3 @@ private struct TodoRow: View {
         .background(Theme.panel, in: RoundedRectangle(cornerRadius: Theme.panelCorner))
     }
 }
-
-/// Six dots in a 2×3 grid. Compact so it fits the notch row.
-private struct DragHandle: View {
-    var body: some View {
-        VStack(spacing: 2) {
-            HStack(spacing: 2) { dot; dot }
-            HStack(spacing: 2) { dot; dot }
-            HStack(spacing: 2) { dot; dot }
-        }
-        .frame(width: 12, height: 12)
-        .contentShape(Rectangle())
-    }
-
-    private var dot: some View {
-        Circle()
-            .fill(Theme.textSecondary.opacity(0.65))
-            .frame(width: 2.5, height: 2.5)
-    }
-}
