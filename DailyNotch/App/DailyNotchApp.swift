@@ -7,6 +7,7 @@ import Combine
 struct DailyNotchApp: App {
     @NSApplicationDelegateAdaptor(AppDelegate.self) private var appDelegate
     @ObservedObject private var focusMenu = FocusMenuState.shared
+    @ObservedObject private var updateChecker = UpdateChecker.shared
 
     var body: some Scene {
         MenuBarExtra("DailyNotch", systemImage: "hourglass.circle") {
@@ -16,6 +17,15 @@ struct DailyNotchApp: App {
                 appDelegate.focus.toggleStartStop()
             }
             .keyboardShortcut(.space, modifiers: [.command, .shift])
+            Divider()
+            if let update = updateChecker.availableUpdate {
+                Button("Update to \(update.version) available…") {
+                    updateChecker.openReleasePage()
+                }
+            } else {
+                Button("Version \(updateChecker.currentVersion)") {}
+                    .disabled(true)
+            }
             Divider()
             Button("Quit DailyNotch") { NSApp.terminate(nil) }
                 .keyboardShortcut("q")
@@ -69,6 +79,9 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         ) { [weak self] in
             self?.focus.toggleStartStop()
         }
+
+        // Check GitHub for a newer release so the menu can offer an update.
+        UpdateChecker.shared.checkForUpdates()
 
         let vm = NotchViewModel(store: store, focus: focus, metrics: .primary)
         vm.openTasksWindow = { [weak self] in self?.showTasksWindow() }
