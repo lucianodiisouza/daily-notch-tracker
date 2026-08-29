@@ -5,7 +5,7 @@ All notable changes to this project will be documented in this file.
 The format is based on [Conventional Commits](https://www.conventionalcommits.org/),
 and this project adheres to [Semantic Versioning](https://semver.org/).
 
-## [unreleased]
+## [0.0.2] - 2026-08-29
 
 ### 🚀 Features
 
@@ -14,6 +14,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 - *(tasks)* Refined focus time picker (macOS-Clock-style popover)
 - *(settings)* Align Alerts with Timer; reuse FocusTimePicker
 - *(app)* Show Cmd+Shift+Space in the menu bar
+- *(settings)* Launch at login toggle
 
 ### 🐛 Bug Fixes
 
@@ -27,6 +28,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 ### 🚜 Refactor
 
 - *(app)* Remove Settings from the menu bar
+- *(notch)* Drop the now-redundant private DragHandle
+
+### 📚 Documentation
+
+- Rewrite README to reflect current features
+
+### ⚙️ Miscellaneous Tasks
+
+- *(ci)* Conventional-changelog via git-cliff
+- *(github)* Drop the duplicated v in the PREV_TAG grep pattern
 ## [0.0.1] - 2026-08-29
 
 ### 🚀 Features
