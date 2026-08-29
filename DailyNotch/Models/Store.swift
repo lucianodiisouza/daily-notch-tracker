@@ -32,7 +32,9 @@ final class Store: ObservableObject {
 
     func add(title: String, notes: String = "", estimate: Int = 25, date: Date? = Date()) {
         guard !title.trimmingCharacters(in: .whitespaces).isEmpty else { return }
-        tasks.append(Task(title: title, notes: notes, scheduledDate: date, estimateMinutes: estimate))
+        let nextOrder = (tasks.map(\.sortOrder).max() ?? 0) + 1024
+        tasks.append(Task(title: title, notes: notes, scheduledDate: date,
+                          estimateMinutes: estimate, sortOrder: nextOrder))
         save()
     }
 
@@ -59,17 +61,39 @@ final class Store: ObservableObject {
         save()
     }
 
+    /// Reorder tasks within a visible list (e.g. today's tasks or the
+    /// unscheduled bucket). The caller passes the list the user is looking at
+    /// so the source/destination indices line up with what they see; we
+    /// re-stamp the moved tasks' `sortOrder` in their new positions using
+    /// 1024-step spacing. Collisions across lists don't matter because each
+    /// list is sorted independently.
+    func moveTasks(in list: [Task], from source: IndexSet, to destination: Int) {
+        var working = list
+        working.move(fromOffsets: source, toOffset: destination)
+        for (i, t) in working.enumerated() {
+            if let idx = tasks.firstIndex(where: { $0.id == t.id }) {
+                tasks[idx].sortOrder = Double(i + 1) * 1024
+            }
+        }
+        save()
+    }
+
     // MARK: - Queries
+
+    /// Sort key: prefer user-controlled `sortOrder`; break ties on `createdAt`
+    /// so legacy tasks (sortOrder == 0) and same-rank new tasks stay stable.
+    private func sortKey(_ t: Task) -> (Double, Date) { (t.sortOrder, t.createdAt) }
 
     func tasks(on day: Date) -> [Task] {
         let cal = Calendar.current
         return tasks
             .filter { $0.scheduledDate.map { cal.isDate($0, inSameDayAs: day) } ?? false }
-            .sorted { $0.createdAt < $1.createdAt }
+            .sorted { sortKey($0) < sortKey($1) }
     }
 
     var unscheduled: [Task] {
-        tasks.filter { $0.scheduledDate == nil }.sorted { $0.createdAt < $1.createdAt }
+        tasks.filter { $0.scheduledDate == nil }
+            .sorted { sortKey($0) < sortKey($1) }
     }
 
     /// Days (normalized to start-of-day) that have at least one focus session.
@@ -118,5 +142,14 @@ final class Store: ObservableObject {
               let payload = try? JSONDecoder().decode(Payload.self, from: data) else { return }
         tasks = payload.tasks
         sessions = payload.sessions
+        // One-shot migration: any task with sortOrder == 0 came from a pre-reorder
+        // data file. Give each one a stable value in the persisted order so the
+        // first display matches what the user had, and reorders start working.
+        if tasks.contains(where: { $0.sortOrder == 0 }) {
+            for i in tasks.indices {
+                tasks[i].sortOrder = Double(i + 1) * 1024
+            }
+            save()
+        }
     }
 }

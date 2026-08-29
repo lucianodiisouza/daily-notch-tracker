@@ -59,13 +59,20 @@ struct TasksWindowView: View {
                     .labelsHidden()
                 }
 
-                ScrollView {
-                    VStack(spacing: 8) {
-                        ForEach(listedTasks) { task in
-                            TaskRow(task: task) { editingTask = task }
-                        }
+                List {
+                    ForEach(listedTasks) { task in
+                        TaskRow(task: task) { editingTask = task }
+                            .listRowBackground(Color.clear)
+                            .listRowSeparator(.hidden)
+                            .listRowInsets(EdgeInsets(top: 4, leading: 0, bottom: 4, trailing: 0))
+                    }
+                    .onMove { source, destination in
+                        store.moveTasks(in: listedTasks, from: source, to: destination)
                     }
                 }
+                .listStyle(.plain)
+                .scrollContentBackground(.hidden)
+                .frame(maxWidth: .infinity, maxHeight: .infinity)
 
                 Spacer(minLength: 0)
 
