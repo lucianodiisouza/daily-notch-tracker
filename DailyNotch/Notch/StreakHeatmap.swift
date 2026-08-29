@@ -1,14 +1,16 @@
 import SwiftUI
 
-/// Contribution grid of recent focus activity with graded shades. Rows are the
-/// seven weekdays (Mon…Sun); columns are weeks, most recent on the right.
+/// Focus-activity grid for the CURRENT month only, laid out as calendar weeks
+/// (Mon…Sun columns, one row per week) under an "Activity" header. No day/month
+/// axis labels — just graded cells, shaded by how many focus sessions landed on
+/// each day. Days outside the month or in the future are left blank.
 struct StreakHeatmap: View {
     @EnvironmentObject private var store: Store
 
-    private let weeks = 12
-    private let cell: CGFloat = 16
-    private let gap: CGFloat = 4
-    private let radius: CGFloat = 4
+    private let cell: CGFloat = 24
+    private let gap: CGFloat = 6
+    private let radius: CGFloat = 5
+    private let rows = 6            // reserve 6 week-rows so height never jumps
 
     private var cal: Calendar {
         var c = Calendar.current
@@ -17,17 +19,17 @@ struct StreakHeatmap: View {
     }
 
     var body: some View {
+        let counts = countsByDay()
+        let today = cal.startOfDay(for: Date())
         VStack(alignment: .leading, spacing: 10) {
             Label("Activity", systemImage: "chart.bar.fill")
                 .font(.system(size: 12, weight: .semibold))
                 .foregroundStyle(Theme.textPrimary)
 
-            let counts = countsByDay()
-            let today = cal.startOfDay(for: Date())
             VStack(spacing: gap) {
-                ForEach(0..<7, id: \.self) { row in
+                ForEach(0..<rows, id: \.self) { row in
                     HStack(spacing: gap) {
-                        ForEach(0..<weeks, id: \.self) { col in
+                        ForEach(0..<7, id: \.self) { col in
                             cellView(for: date(row: row, col: col),
                                      today: today, counts: counts)
                         }
@@ -38,20 +40,26 @@ struct StreakHeatmap: View {
     }
 
     @ViewBuilder
-    private func cellView(for day: Date, today: Date, counts: [Date: Int]) -> some View {
-        let isFuture = day > today
+    private func cellView(for day: Date?, today: Date, counts: [Date: Int]) -> some View {
+        // Blank slot when the cell falls outside the current month or in the future.
+        let show = day.map { $0 <= today } ?? false
         RoundedRectangle(cornerRadius: radius)
-            .fill(isFuture ? Color.clear : color(for: counts[day] ?? 0))
+            .fill(show ? color(for: counts[day!] ?? 0) : Color.clear)
             .frame(width: cell, height: cell)
     }
 
-    /// Date at grid position (row = weekday 0=Mon, col = week, rightmost = current).
-    private func date(row: Int, col: Int) -> Date {
+    /// Date at grid position within the current month, or nil for a padding slot
+    /// before the 1st / after the last day.
+    private func date(row: Int, col: Int) -> Date? {
         let today = cal.startOfDay(for: Date())
-        let weekdayIndex = (cal.component(.weekday, from: today) + 5) % 7   // Mon=0…Sun=6
-        let currentWeekMonday = cal.date(byAdding: .day, value: -weekdayIndex, to: today)!
-        let weekMonday = cal.date(byAdding: .day, value: -(weeks - 1 - col) * 7, to: currentWeekMonday)!
-        return cal.date(byAdding: .day, value: row, to: weekMonday)!
+        let firstOfMonth = cal.date(from: cal.dateComponents([.year, .month], from: today))!
+        // Weekday offset of the 1st within a Monday-first week (Mon=0…Sun=6).
+        let leading = (cal.component(.weekday, from: firstOfMonth) + 5) % 7
+        let dayIndex = row * 7 + col - leading      // 0-based day of month
+        guard dayIndex >= 0,
+              let candidate = cal.date(byAdding: .day, value: dayIndex, to: firstOfMonth),
+              cal.isDate(candidate, equalTo: today, toGranularity: .month) else { return nil }
+        return candidate
     }
 
     /// Map a day's focus-session count to one of five graded shades.

@@ -43,7 +43,7 @@ final class NotchViewModel: ObservableObject {
     var expandedHeight: CGFloat {
         let rows = CGFloat(Self.visibleTodoRows)
         let todoColumn = 22 + rows * Self.todoRowHeight + (rows - 1) * 6 + 30
-        let heatmapColumn: CGFloat = 22 + (7 * 16 + 6 * 4)   // header + 7-row grid
+        let heatmapColumn: CGFloat = 22 + (6 * 24 + 5 * 6)   // header + 6 week-rows
         return notchHeight + 4 + max(todoColumn, heatmapColumn) + 14
     }
 

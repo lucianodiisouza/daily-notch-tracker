@@ -12,7 +12,7 @@ struct NotchDashboardView: View {
                 .fill(Color.white.opacity(0.07))
                 .frame(width: 1)
             StreakHeatmap()
-                .frame(width: 244, alignment: .topLeading)
+                .frame(width: 204, alignment: .topLeading)
         }
         .padding(.horizontal, 18)
         // Clear the physical notch: content starts below the notch height.
