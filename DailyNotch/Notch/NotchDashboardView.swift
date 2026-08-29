@@ -27,7 +27,13 @@ struct TodoPanel: View {
     @EnvironmentObject private var store: Store
     @EnvironmentObject private var focus: FocusTimer
 
-    // Completed tasks drop out of the notch stack — only what's left to do.
+    @State private var draggingFrom: Int?
+    @State private var dragOffset: CGFloat = 0
+
+    private let rowHeight = NotchViewModel.todoRowHeight
+    private let rowGap: CGFloat = 8
+
+    /// Completed tasks drop out of the notch stack — only what's left to do.
     private var todays: [Task] { store.tasks(on: Date()).filter { !$0.isDone } }
 
     var body: some View {
@@ -46,21 +52,25 @@ struct TodoPanel: View {
             }
 
             // Exactly two rows tall; scrolls when there are more tasks.
-            List {
-                ForEach(todays) { task in
-                    TodoRow(task: task)
-                        .listRowBackground(Color.clear)
-                        .listRowSeparator(.hidden)
-                        .listRowInsets(EdgeInsets(top: 0, leading: 0, bottom: 0, trailing: 0))
-                }
-                .onMove { source, destination in
-                    store.moveTasks(in: todays, from: source, to: destination)
+            ScrollView(.vertical, showsIndicators: false) {
+                VStack(spacing: rowGap) {
+                    ForEach(Array(todays.enumerated()), id: \.element.id) { index, task in
+                        TodoRow(
+                            task: task,
+                            index: index,
+                            isDragging: draggingFrom == index,
+                            onDragStart: { handleDragStart(index) },
+                            onDragChanged: { handleDragChanged($0) },
+                            onDragEnd: handleDragEnd
+                        )
+                        .offset(y: offsetForIndex(index))
+                        .zIndex(draggingFrom == index ? 1 : 0)
+                        .animation(.easeOut(duration: 0.18), value: targetIndex())
+                    }
                 }
             }
-            .listStyle(.plain)
-            .scrollContentBackground(.hidden)
-            .frame(height: CGFloat(NotchViewModel.visibleTodoRows) * NotchViewModel.todoRowHeight
-                   + CGFloat(NotchViewModel.visibleTodoRows - 1) * 6)
+            .frame(height: CGFloat(NotchViewModel.visibleTodoRows) * rowHeight
+                   + CGFloat(NotchViewModel.visibleTodoRows - 1) * rowGap)
 
             Button { vm.openTasksWindow() } label: {
                 Text("Add a task")
@@ -73,10 +83,60 @@ struct TodoPanel: View {
             .buttonStyle(.plain)
         }
     }
+
+    // MARK: - Custom drag bookkeeping
+
+    private func handleDragStart(_ index: Int) {
+        draggingFrom = index
+        dragOffset = 0
+    }
+
+    private func handleDragChanged(_ offset: CGFloat) {
+        dragOffset = offset
+    }
+
+    private func handleDragEnd() {
+        if let from = draggingFrom {
+            let to = targetIndex()
+            if to != from {
+                store.moveTasks(in: todays, from: IndexSet(integer: from), to: to)
+            }
+        }
+        draggingFrom = nil
+        dragOffset = 0
+    }
+
+    /// Where the dragged row would land if released right now.
+    private func targetIndex() -> Int {
+        guard let from = draggingFrom else { return 0 }
+        let total = todays.count
+        guard total > 0 else { return 0 }
+        let stride = rowHeight + rowGap
+        let rowsMoved = Int((dragOffset / stride).rounded())
+        return max(0, min(total - 1, from + rowsMoved))
+    }
+
+    /// Per-row vertical offset: dragged row tracks the cursor, the rows
+    /// between `from` and `target` shift one stride to make space.
+    private func offsetForIndex(_ index: Int) -> CGFloat {
+        guard let from = draggingFrom else { return 0 }
+        if index == from { return dragOffset }
+        let target = targetIndex()
+        let stride = rowHeight + rowGap
+        if target > from, index > from, index <= target { return -stride }
+        if target < from, index < from, index >= target { return stride }
+        return 0
+    }
 }
 
 private struct TodoRow: View {
     let task: Task
+    let index: Int
+    let isDragging: Bool
+    let onDragStart: () -> Void
+    let onDragChanged: (CGFloat) -> Void
+    let onDragEnd: () -> Void
+
     @EnvironmentObject private var vm: NotchViewModel
     @EnvironmentObject private var store: Store
     @EnvironmentObject private var focus: FocusTimer
@@ -136,9 +196,40 @@ private struct TodoRow: View {
                                 in: Circle())
             }
             .buttonStyle(.plain)
+
+            // Drag handle — six dots in a 2×3 grid. Only this corner is
+            // draggable; the rest of the row keeps its tap-to-open behavior.
+            DragHandle()
+                .gesture(
+                    DragGesture(minimumDistance: 0, coordinateSpace: .local)
+                        .onChanged { value in
+                            if !isDragging { onDragStart(index) }
+                            onDragChanged(value.translation.height)
+                        }
+                        .onEnded { _ in onDragEnd() }
+                )
         }
         .padding(.horizontal, 8)
         .frame(height: NotchViewModel.todoRowHeight)
         .background(Theme.panel, in: RoundedRectangle(cornerRadius: Theme.panelCorner))
+    }
+}
+
+/// Six dots in a 2×3 grid. Compact so it fits the notch row.
+private struct DragHandle: View {
+    var body: some View {
+        VStack(spacing: 2) {
+            HStack(spacing: 2) { dot; dot }
+            HStack(spacing: 2) { dot; dot }
+            HStack(spacing: 2) { dot; dot }
+        }
+        .frame(width: 12, height: 12)
+        .contentShape(Rectangle())
+    }
+
+    private var dot: some View {
+        Circle()
+            .fill(Theme.textSecondary.opacity(0.65))
+            .frame(width: 2.5, height: 2.5)
     }
 }
