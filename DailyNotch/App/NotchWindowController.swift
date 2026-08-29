@@ -69,9 +69,14 @@ final class NotchWindowController {
     private func reposition(animated: Bool) {
         let screen = viewModel.metrics.screen
         let size = viewModel.targetSize
-        let x = screen.frame.midX - size.width / 2
-        let y = screen.frame.maxY - size.height   // top edge flush with screen top
-        let frame = NSRect(x: x, y: y, width: size.width, height: size.height)
+        // Snap to whole pixels. A fractional origin/size lands the rounded pill
+        // + tray on different subpixels each open/close, which makes the bottom
+        // border antialias inconsistently and occasionally read as "cut".
+        let w = size.width.rounded()
+        let h = size.height.rounded()
+        let x = (screen.frame.midX - w / 2).rounded()
+        let y = screen.frame.maxY - h              // top edge flush with screen top
+        let frame = NSRect(x: x, y: y, width: w, height: h)
 
         if animated {
             NSAnimationContext.runAnimationGroup { ctx in

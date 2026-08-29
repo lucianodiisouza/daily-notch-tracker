@@ -54,9 +54,15 @@ struct RootNotchView: View {
             // clipped flat — reading as a "cut" border (most obvious when idle,
             // with no bright progress fill drawn over it).
             let inset: CGFloat = vm.expanded ? 7 : 6
+            // Keep the tray corner strictly INSIDE the pill's clip: subtract the
+            // stroke's outward reach (half the line width) plus a hairline, so
+            // the rounded corner never touches the clip edge and gets shaved
+            // flat. `pillCorner - inset` alone sits exactly on the boundary and
+            // clips intermittently as the window lands on different subpixels.
+            let corner = max(4, pillCorner - inset - trayLineWidth)
             let shape = NotchTrayShape(inset: inset,
                                        topInset: vm.expanded ? 7 : 5,
-                                       corner: max(4, pillCorner - inset))
+                                       corner: corner)
             let style = StrokeStyle(lineWidth: trayLineWidth, lineCap: .round)
             if store.settings.rainbowTimeline {
                 // Animated RGB: the whole hue spectrum is laid out ALONG the
