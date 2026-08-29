@@ -11,7 +11,7 @@ permissions:
 jobs:
   release:
     name: Build, package, notarize, publish
-    runs-on: macos-14
+    runs-on: macos-15
 
     steps:
       - name: Checkout
