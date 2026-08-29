@@ -31,9 +31,15 @@ final class FocusTimer: ObservableObject {
     }
 
     func start(task: Task) {
+        start(durationMinutes: task.estimateMinutes, task: task)
+    }
+
+    /// Start a focus block. `task` may be nil — used by the global hotkey when
+    /// the user just wants to start a session without a specific task.
+    func start(durationMinutes: Int, task: Task? = nil) {
         stop(record: state != .idle)   // wrap up any prior block first
         activeTask = task
-        total = TimeInterval(max(1, task.estimateMinutes) * 60)
+        total = TimeInterval(max(1, durationMinutes) * 60)
         remaining = total
         startedAt = Date()
         resume()
@@ -90,18 +96,19 @@ final class FocusTimer: ObservableObject {
     }
 
     /// Toggle used by the global hotkey: if a session is in flight, stop it;
-    /// otherwise start the first undone task scheduled for today. Falls back
-    /// to a system beep when there is nothing on the list to focus on.
+    /// otherwise start the first undone task scheduled for today. When the
+    /// day's list is empty, fall back to a blank session using the user's
+    /// current `focusMinutes` setting so the hotkey always does something.
     func toggleStartStop() {
         if isActive {
             stop(record: true)
             return
         }
-        guard let next = store.tasks(on: Date()).first(where: { !$0.isDone }) else {
-            NSSound.beep()
-            return
+        if let next = store.tasks(on: Date()).first(where: { !$0.isDone }) {
+            start(task: next)
+        } else {
+            start(durationMinutes: store.settings.focusMinutes, task: nil)
         }
-        start(task: next)
     }
 
     private func finishSession(completed: Bool) {
