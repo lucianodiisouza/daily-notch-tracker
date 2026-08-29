@@ -19,8 +19,11 @@ struct TaskDetailView: View {
                     .foregroundStyle(Theme.textPrimary)
                 Spacer()
                 Button { dismiss() } label: {
-                    Image(systemName: "xmark").font(.system(size: 12, weight: .semibold))
+                    Image(systemName: "xmark")
+                        .font(.system(size: 12, weight: .semibold))
                         .foregroundStyle(Theme.textSecondary)
+                        .frame(width: 22, height: 22)
+                        .contentShape(Rectangle())
                 }
                 .buttonStyle(.plain)
             }
@@ -44,7 +47,7 @@ struct TaskDetailView: View {
                     FocusTimePicker(
                         minutes: $draft.estimateMinutes,
                         range: FocusSettings.focusRange,
-                        presets: [5, 10, 15, 25, 30, 45, 60, 90]
+                        presets: [15, 25, 30, 45, 60, 90]
                     )
                 }
                 field("Date") {
@@ -63,23 +66,35 @@ struct TaskDetailView: View {
             .toggleStyle(.switch)
             .padding(.top, 2)
 
-            HStack {
+            HStack(spacing: 8) {
                 Button(role: .destructive) {
                     store.delete(draft); dismiss()
                 } label: {
-                    Label("Delete", systemImage: "trash").font(.system(size: 13))
+                    Label("Delete", systemImage: "trash")
+                        .font(.system(size: 13))
+                        .padding(.horizontal, 12).padding(.vertical, 8)
+                        .contentShape(Rectangle())
                 }
+                .buttonStyle(.plain)
                 Spacer()
                 Button {
                     store.update(draft); focus.start(task: draft); dismiss()
                 } label: {
-                    Label("Start", systemImage: "play.fill").font(.system(size: 13, weight: .semibold))
+                    Label("Start", systemImage: "play.fill")
+                        .font(.system(size: 13, weight: .semibold))
+                        .padding(.horizontal, 12).padding(.vertical, 8)
+                        .contentShape(Rectangle())
                 }
+                .buttonStyle(.plain)
                 Button {
                     store.update(draft); dismiss()
                 } label: {
-                    Text("Save").font(.system(size: 13, weight: .semibold))
+                    Text("Save")
+                        .font(.system(size: 13, weight: .semibold))
+                        .padding(.horizontal, 14).padding(.vertical, 8)
+                        .contentShape(Rectangle())
                 }
+                .buttonStyle(.plain)
                 .keyboardShortcut(.defaultAction)
             }
         }
