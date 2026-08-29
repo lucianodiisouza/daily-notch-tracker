@@ -23,6 +23,7 @@ final class TasksWindowController: NSObject, NSWindowDelegate {
                 contentRect: NSRect(x: 0, y: 0, width: 760, height: 480),
                 styleMask: [.titled, .closable, .fullSizeContentView],
                 backing: .buffered, defer: false)
+            win.isReleasedWhenClosed = false   // ARC owns the window; avoid AppKit's extra release on close
             win.title = "Tasks"
             win.titlebarAppearsTransparent = true
             win.titleVisibility = .hidden
