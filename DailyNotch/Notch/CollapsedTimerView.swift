@@ -10,7 +10,24 @@ struct CollapsedTimerView: View {
 
     var body: some View {
         if focus.isActive {
-            VStack(spacing: 0) {
+            if vm.store.settings.minimalMode {
+                // Minimal: no ears, no text — just reserve the notch footprint
+                // (plus the tray room below, drawn in RootNotchView). The pill
+                // shrinks to `notchWidth` via NotchViewModel.collapsedWidth.
+                VStack(spacing: 0) {
+                    Color.clear.frame(height: vm.notchHeight)
+                    Spacer(minLength: 0)
+                }
+            } else {
+                fullPill
+            }
+        } else {
+            Color.clear
+        }
+    }
+
+    private var fullPill: some View {
+        VStack(spacing: 0) {
                 // ---- ears (flexible so the row always fits the window width;
                 //      fixed-width ears would overflow and push the tray sides
                 //      off-screen) ----
@@ -49,8 +66,5 @@ struct CollapsedTimerView: View {
                 // this spacer just reserves the room below the notch line.
                 Spacer(minLength: 0)
             }
-        } else {
-            Color.clear
-        }
     }
 }

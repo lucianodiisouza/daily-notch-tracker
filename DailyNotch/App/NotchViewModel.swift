@@ -29,12 +29,19 @@ final class NotchViewModel: ObservableObject {
     /// Width of each "ear" flanking the notch in the collapsed active pill.
     let activeEarWidth: CGFloat = 158
 
+    /// Extra width added on EACH side in minimal mode so the tray's vertical
+    /// side segments clear the physical notch edges and stay visible (a pill of
+    /// exactly `notchWidth` hides them behind the camera housing).
+    let minimalSideMargin: CGFloat = 26
+
     var collapsedHeight: CGFloat {
         // Keep the dark overhang below the notch small; just enough room for the
         // progress tray to show its bottom + short side segments. With the
         // timeline disabled there's no tray to make room for, so the pill sits
-        // flush at the exact hardware-notch height.
-        focus.isActive && store.settings.showTimeline ? notchHeight + 14 : notchHeight
+        // flush at the exact hardware-notch height. Minimal mode trims the
+        // overhang further so the line hugs the notch's bottom edge.
+        guard focus.isActive && store.settings.showTimeline else { return notchHeight }
+        return store.settings.minimalMode ? notchHeight + 8 : notchHeight + 14
     }
 
     /// Fixed height: always exactly two visible to-do rows (the list scrolls if
@@ -51,8 +58,13 @@ final class NotchViewModel: ObservableObject {
     }
 
     var collapsedWidth: CGFloat {
-        // Idle: hug the notch exactly (invisible). Active: notch + two ears.
-        focus.isActive ? notchWidth + activeEarWidth * 2 : notchWidth
+        // Idle: hug the notch exactly (invisible). Active normal: notch + two
+        // ears. Active minimal: notch + a small side margin so the tray's side
+        // segments clear the notch edges.
+        guard focus.isActive else { return notchWidth }
+        return store.settings.minimalMode
+            ? notchWidth + minimalSideMargin * 2
+            : notchWidth + activeEarWidth * 2
     }
     var expandedWidth: CGFloat { 620 }
 
