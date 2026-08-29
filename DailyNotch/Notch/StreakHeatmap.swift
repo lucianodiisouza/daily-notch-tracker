@@ -1,40 +1,57 @@
 import SwiftUI
 
-/// GitHub-style contribution grid of recent focus activity, with graded shades
-/// per day. Dimensions match the prototype: 13 columns x 4 rows of rounded
-/// cells, most-recent day in the bottom-right.
+/// Contribution grid of recent focus activity with graded shades. Rows are the
+/// seven weekdays (Mon…Sun); columns are weeks, most recent on the right.
 struct StreakHeatmap: View {
     @EnvironmentObject private var store: Store
 
-    // Prototype dimensions.
-    private let columns = 13
-    private let rows = 4
-    private let cell: CGFloat = 14
+    private let weeks = 12
+    private let cell: CGFloat = 16
     private let gap: CGFloat = 4
     private let radius: CGFloat = 4
 
+    private var cal: Calendar {
+        var c = Calendar.current
+        c.firstWeekday = 2   // Monday
+        return c
+    }
+
     var body: some View {
         VStack(alignment: .leading, spacing: 10) {
-            HStack {
-                Label("Activity", systemImage: "chart.bar.fill")
-                    .font(.system(size: 12, weight: .semibold))
-                    .foregroundStyle(Theme.textPrimary)
-                Spacer()
-                Text("\(store.currentStreak)d")
-                    .font(.system(size: 11, weight: .medium))
-                    .foregroundStyle(Theme.textSecondary)
-            }
+            Label("Activity", systemImage: "chart.bar.fill")
+                .font(.system(size: 12, weight: .semibold))
+                .foregroundStyle(Theme.textPrimary)
 
             let counts = countsByDay()
-            let grid = Array(repeating: GridItem(.fixed(cell), spacing: gap), count: columns)
-            LazyVGrid(columns: grid, alignment: .leading, spacing: gap) {
-                ForEach(gridDays, id: \.self) { day in
-                    RoundedRectangle(cornerRadius: radius)
-                        .fill(color(for: counts[day] ?? 0))
-                        .frame(width: cell, height: cell)
+            let today = cal.startOfDay(for: Date())
+            VStack(spacing: gap) {
+                ForEach(0..<7, id: \.self) { row in
+                    HStack(spacing: gap) {
+                        ForEach(0..<weeks, id: \.self) { col in
+                            cellView(for: date(row: row, col: col),
+                                     today: today, counts: counts)
+                        }
+                    }
                 }
             }
         }
+    }
+
+    @ViewBuilder
+    private func cellView(for day: Date, today: Date, counts: [Date: Int]) -> some View {
+        let isFuture = day > today
+        RoundedRectangle(cornerRadius: radius)
+            .fill(isFuture ? Color.clear : color(for: counts[day] ?? 0))
+            .frame(width: cell, height: cell)
+    }
+
+    /// Date at grid position (row = weekday 0=Mon, col = week, rightmost = current).
+    private func date(row: Int, col: Int) -> Date {
+        let today = cal.startOfDay(for: Date())
+        let weekdayIndex = (cal.component(.weekday, from: today) + 5) % 7   // Mon=0…Sun=6
+        let currentWeekMonday = cal.date(byAdding: .day, value: -weekdayIndex, to: today)!
+        let weekMonday = cal.date(byAdding: .day, value: -(weeks - 1 - col) * 7, to: currentWeekMonday)!
+        return cal.date(byAdding: .day, value: row, to: weekMonday)!
     }
 
     /// Map a day's focus-session count to one of five graded shades.
@@ -48,24 +65,11 @@ struct StreakHeatmap: View {
         }
     }
 
-    /// Number of focus sessions started on each day.
     private func countsByDay() -> [Date: Int] {
-        let cal = Calendar.current
         var map: [Date: Int] = [:]
         for session in store.sessions {
-            let day = cal.startOfDay(for: session.startedAt)
-            map[day, default: 0] += 1
+            map[cal.startOfDay(for: session.startedAt), default: 0] += 1
         }
         return map
-    }
-
-    /// The last (rows x columns) days ending today in the bottom-right cell.
-    private var gridDays: [Date] {
-        let cal = Calendar.current
-        let today = cal.startOfDay(for: Date())
-        let total = rows * columns
-        return (0..<total).reversed().compactMap {
-            cal.date(byAdding: .day, value: -$0, to: today)
-        }
     }
 }
