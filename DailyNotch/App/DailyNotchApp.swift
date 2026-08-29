@@ -1,5 +1,6 @@
 import SwiftUI
 import AppKit
+import Carbon.HIToolbox
 
 @main
 struct DailyNotchApp: App {
@@ -23,6 +24,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     private var notchController: NotchWindowController?
     private var tasksController: TasksWindowController?
     private var viewModel: NotchViewModel?
+    private let hotkey = GlobalHotkey()
 
     func applicationDidFinishLaunching(_ notification: Notification) {
         NSApp.setActivationPolicy(.accessory)   // no Dock icon; lives in the notch
@@ -31,6 +33,14 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         // collapsed pill's progress line resets instead of running on.
         store.onTaskDeactivated = { [weak self] id, record in
             self?.focus.stopIfActive(id, record: record)
+        }
+
+        // Cmd+Shift+Space: toggle the active focus session from anywhere.
+        hotkey.register(
+            keyCode: UInt32(kVK_Space),
+            modifiers: UInt32(cmdKey | shiftKey)
+        ) { [weak self] in
+            self?.focus.toggleStartStop()
         }
 
         let vm = NotchViewModel(store: store, focus: focus, metrics: .primary)

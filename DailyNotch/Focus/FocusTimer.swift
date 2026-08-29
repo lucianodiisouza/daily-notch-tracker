@@ -89,6 +89,21 @@ final class FocusTimer: ObservableObject {
         stop(record: record)
     }
 
+    /// Toggle used by the global hotkey: if a session is in flight, stop it;
+    /// otherwise start the first undone task scheduled for today. Falls back
+    /// to a system beep when there is nothing on the list to focus on.
+    func toggleStartStop() {
+        if isActive {
+            stop(record: true)
+            return
+        }
+        guard let next = store.tasks(on: Date()).first(where: { !$0.isDone }) else {
+            NSSound.beep()
+            return
+        }
+        start(task: next)
+    }
+
     private func finishSession(completed: Bool) {
         guard let startedAt else { return }
         let session = FocusSession(taskId: activeTask?.id,
