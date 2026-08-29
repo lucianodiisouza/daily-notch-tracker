@@ -10,6 +10,8 @@ struct DailyNotchApp: App {
         MenuBarExtra("DailyNotch", systemImage: "hourglass.circle") {
             Button("Open Tasks…") { appDelegate.showTasksWindow() }
                 .keyboardShortcut("t")
+            Button("Settings…") { appDelegate.showSettingsWindow() }
+                .keyboardShortcut(",")
             Divider()
             Button("Quit DailyNotch") { NSApp.terminate(nil) }
                 .keyboardShortcut("q")
@@ -23,6 +25,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     lazy var focus = FocusTimer(store: store)
     private var notchController: NotchWindowController?
     private var tasksController: TasksWindowController?
+    private var settingsController: SettingsWindowController?
     private var viewModel: NotchViewModel?
     private let hotkey = GlobalHotkey()
 
@@ -54,5 +57,12 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             tasksController = TasksWindowController(store: store, focus: focus)
         }
         tasksController?.show()
+    }
+
+    func showSettingsWindow() {
+        if settingsController == nil {
+            settingsController = SettingsWindowController(store: store)
+        }
+        settingsController?.show()
     }
 }

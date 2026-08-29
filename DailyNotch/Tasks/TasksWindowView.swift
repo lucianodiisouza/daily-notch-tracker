@@ -12,6 +12,7 @@ struct TasksWindowView: View {
     @State private var draftTitle = ""
     @State private var draftNotes = ""
     @State private var editingTask: Task?
+    @State private var showSettings = false
 
     enum Tab: String, CaseIterable { case day = "Day", unscheduled = "Unscheduled" }
 
@@ -28,6 +29,13 @@ struct TasksWindowView: View {
                         .font(.system(size: 14, weight: .semibold))
                         .foregroundStyle(Theme.textPrimary)
                     Spacer()
+                    Button { showSettings = true } label: {
+                        Image(systemName: "gearshape")
+                            .font(.system(size: 12, weight: .semibold))
+                            .foregroundStyle(Theme.textSecondary)
+                    }
+                    .buttonStyle(.plain)
+                    .help("Settings")
                 }
                 CalendarView(selectedDate: $selectedDate)
                 Spacer()
@@ -101,6 +109,10 @@ struct TasksWindowView: View {
             TaskDetailView(task: task)
                 .environmentObject(store)
                 .environmentObject(focus)
+        }
+        .sheet(isPresented: $showSettings) {
+            SettingsView()
+                .environmentObject(store)
         }
         .onAppear { consumePendingOpen() }
         .onChange(of: store.pendingOpenTaskID) { _, _ in consumePendingOpen() }
