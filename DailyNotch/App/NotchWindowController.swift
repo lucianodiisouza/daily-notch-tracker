@@ -9,7 +9,6 @@ final class NotchWindowController {
     private let panel: NotchPanel
     private let viewModel: NotchViewModel
     private var cancellables = Set<AnyCancellable>()
-    private var screenObserver: NSObjectProtocol?
 
     @MainActor
     init(viewModel: NotchViewModel) {
@@ -49,18 +48,14 @@ final class NotchWindowController {
             .store(in: &cancellables)
 
         // Re-dock when displays change (monitor plugged in, resolution change…).
-        screenObserver = NotificationCenter.default.addObserver(
-            forName: NSApplication.didChangeScreenParametersNotification,
-            object: nil, queue: .main) { [weak self] _ in
-                MainActor.assumeIsolated { self?.reposition(animated: false) }
-            }
+        NotificationCenter.default
+            .publisher(for: NSApplication.didChangeScreenParametersNotification)
+            .receive(on: RunLoop.main)
+            .sink { [weak self] _ in self?.reposition(animated: false) }
+            .store(in: &cancellables)
 
         reposition(animated: false)
         panel.orderFrontRegardless()
-    }
-
-    deinit {
-        screenObserver.map { NotificationCenter.default.removeObserver($0) }
     }
 
     @MainActor
