@@ -9,6 +9,11 @@ final class SettingsWindowController: NSObject, NSWindowDelegate {
     private var window: NSWindow?
     private let store: Store
 
+    /// Fires when the window is about to close. The app delegate uses this to
+    /// drop the activation policy back to `.accessory` when the last user-
+    /// openable window goes away.
+    var onClose: (() -> Void)?
+
     init(store: Store) {
         self.store = store
     }
@@ -36,5 +41,6 @@ final class SettingsWindowController: NSObject, NSWindowDelegate {
 
     func windowWillClose(_ notification: Notification) {
         window = nil
+        onClose?()
     }
 }
