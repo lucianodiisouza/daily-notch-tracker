@@ -109,12 +109,24 @@ final class Store: ObservableObject {
     private func seedSampleData() {
         add(title: "Design Daily", notes: "Design, and brainstorming for new upcoming products.", estimate: 5)
         add(title: "Fix Bug for Screen", notes: "Fix bug #7 from Sentry reported.", estimate: 25)
-        // Seed a few active days so the streak/heatmap isn't empty on first run.
+
+        // Seed varied activity so the graded heatmap + streak look alive on first
+        // run: a clean 5-day current streak (days 1...5), a gap at day 6, then a
+        // scattered history with 0-4 sessions/day.
         let cal = Calendar.current
-        for offset in 1...5 {
-            guard let day = cal.date(byAdding: .day, value: -offset, to: Date()) else { continue }
-            sessions.append(FocusSession(startedAt: day, endedAt: day.addingTimeInterval(1500), completed: true))
+        func addSessions(_ count: Int, daysAgo: Int) {
+            guard count > 0, let day = cal.date(byAdding: .day, value: -daysAgo, to: Date()) else { return }
+            for _ in 0..<count {
+                sessions.append(FocusSession(startedAt: day,
+                                             endedAt: day.addingTimeInterval(1500),
+                                             completed: true))
+            }
         }
+        let currentStreakCounts = [1: 2, 2: 4, 3: 1, 4: 3, 5: 2]   // days 1...5 = 5-day streak
+        for (daysAgo, count) in currentStreakCounts { addSessions(count, daysAgo: daysAgo) }
+        // day 6 intentionally empty to bound the streak at 5.
+        let history = [3, 1, 0, 2, 4, 1, 0, 0, 3, 2, 1, 0, 4, 2, 0, 1, 3, 0, 2, 1, 4, 0, 1, 2, 0, 3, 1]
+        for (i, count) in history.enumerated() { addSessions(count, daysAgo: 7 + i) }
         save()
     }
 }
