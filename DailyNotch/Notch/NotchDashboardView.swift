@@ -91,6 +91,8 @@ private struct TodoRow: View {
                 Image(systemName: task.isDone ? "checkmark.circle.fill" : "circle")
                     .font(.system(size: 15))
                     .foregroundStyle(task.isDone ? Theme.accent : Theme.textSecondary)
+                    .frame(width: 20, height: 20)
+                    .contentShape(Rectangle())
             }
             .buttonStyle(.plain)
 
@@ -105,6 +107,11 @@ private struct TodoRow: View {
                         .foregroundStyle(Theme.textSecondary)
                         .lineLimit(1)
                 }
+            }
+            .contentShape(Rectangle())
+            .onTapGesture {
+                store.pendingOpenTaskID = task.id
+                vm.openTasksWindow()
             }
             Spacer(minLength: 6)
 
@@ -124,6 +131,7 @@ private struct TodoRow: View {
                     .font(.system(size: 10, weight: .bold))
                     .foregroundStyle(.white)
                     .frame(width: 22, height: 22)
+                    .contentShape(Rectangle())
                     .background(isRunningThis && focus.state == .running ? Theme.danger : Theme.accent,
                                 in: Circle())
             }
@@ -132,11 +140,5 @@ private struct TodoRow: View {
         .padding(.horizontal, 8)
         .frame(height: NotchViewModel.todoRowHeight)
         .background(Theme.panel, in: RoundedRectangle(cornerRadius: Theme.panelCorner))
-        // Tap anywhere else on the row to open the task's detail.
-        .contentShape(RoundedRectangle(cornerRadius: Theme.panelCorner))
-        .onTapGesture {
-            store.pendingOpenTaskID = task.id
-            vm.openTasksWindow()
-        }
     }
 }

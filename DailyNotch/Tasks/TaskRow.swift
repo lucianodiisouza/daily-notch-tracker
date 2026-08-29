@@ -17,6 +17,8 @@ struct TaskRow: View {
                 Image(systemName: task.isDone ? "checkmark.circle.fill" : "circle")
                     .font(.system(size: 16))
                     .foregroundStyle(task.isDone ? Theme.accent : Theme.textSecondary)
+                    .frame(width: 22, height: 22)
+                    .contentShape(Rectangle())
             }
             .buttonStyle(.plain)
 
@@ -33,6 +35,8 @@ struct TaskRow: View {
                         .lineLimit(1)
                 }
             }
+            .contentShape(Rectangle())
+            .onTapGesture { onOpen() }
 
             Spacer(minLength: 8)
 
@@ -50,8 +54,6 @@ struct TaskRow: View {
         }
         .padding(10)
         .background(Theme.panel, in: RoundedRectangle(cornerRadius: 12))
-        .contentShape(RoundedRectangle(cornerRadius: 12))
-        .onTapGesture { onOpen() }
     }
 
     private func chip(icon: String, text: String) -> some View {
@@ -71,6 +73,7 @@ struct TaskRow: View {
                 .font(.system(size: 11, weight: .semibold))
                 .foregroundStyle(fg)
                 .frame(width: 26, height: 26)
+                .contentShape(Rectangle())   // hit area = full 26×26, not just the circle
                 .background(bg, in: Circle())
         }
         .buttonStyle(.plain)
