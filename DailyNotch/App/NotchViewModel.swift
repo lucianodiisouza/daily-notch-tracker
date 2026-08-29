@@ -30,7 +30,9 @@ final class NotchViewModel: ObservableObject {
     let activeEarWidth: CGFloat = 158
 
     var collapsedHeight: CGFloat {
-        focus.isActive ? notchHeight + 22 : notchHeight
+        // Keep the dark overhang below the notch small; just enough room for the
+        // progress tray to show its bottom + short side segments.
+        focus.isActive ? notchHeight + 14 : notchHeight
     }
 
     /// Fixed height: always exactly two visible to-do rows (the list scrolls if

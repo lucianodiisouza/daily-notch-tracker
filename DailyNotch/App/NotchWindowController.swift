@@ -7,6 +7,7 @@ import Combine
 /// SwiftUI content expands and collapses.
 final class NotchWindowController {
     private let panel: NotchPanel
+    private let backing = NSView()
     private let viewModel: NotchViewModel
     private var cancellables = Set<AnyCancellable>()
 
@@ -24,10 +25,8 @@ final class NotchWindowController {
         // Opaque black backing with rounded BOTTOM corners. Because it's a real
         // CALayer it resizes in lockstep with the window, so animating the frame
         // never exposes a transparent gap (which showed the wallpaper).
-        let backing = NSView()
         backing.wantsLayer = true
         backing.layer?.backgroundColor = NSColor.black.cgColor
-        backing.layer?.cornerRadius = Theme.notchCorner
         backing.layer?.maskedCorners = [.layerMinXMinYCorner, .layerMaxXMinYCorner]
         backing.layer?.masksToBounds = true
 
@@ -65,6 +64,10 @@ final class NotchWindowController {
         let x = screen.frame.midX - size.width / 2
         let y = screen.frame.maxY - size.height   // top edge flush with screen top
         let frame = NSRect(x: x, y: y, width: size.width, height: size.height)
+
+        // Round the bottom corners generously when expanded, tightly when
+        // collapsed (a big radius on the short pill eats the side segments).
+        backing.layer?.cornerRadius = viewModel.expanded ? Theme.notchCorner : 12
 
         if animated {
             NSAnimationContext.runAnimationGroup { ctx in
