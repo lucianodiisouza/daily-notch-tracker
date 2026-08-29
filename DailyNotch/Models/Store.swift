@@ -97,11 +97,11 @@ final class Store: ObservableObject {
         let cal = Calendar.current
         return tasks
             .filter { $0.scheduledDate.map { cal.isDate($0, inSameDayAs: day) } ?? false }
-            .sorted(isBefore)
+            .sorted(by: isBefore)
     }
 
     var unscheduled: [Task] {
-        tasks.filter { $0.scheduledDate == nil }.sorted(isBefore)
+        tasks.filter { $0.scheduledDate == nil }.sorted(by: isBefore)
     }
 
     /// Days (normalized to start-of-day) that have at least one focus session.
