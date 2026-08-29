@@ -7,10 +7,17 @@ final class TasksWindowController: NSObject, NSWindowDelegate {
     private var window: NSWindow?
     private let store: Store
     private let focus: FocusTimer
+    private let pomodoro: PomodoroEngine
 
-    init(store: Store, focus: FocusTimer) {
+    /// Fires when the window is about to close. The app delegate uses this to
+    /// drop the activation policy back to `.accessory` when the last user-
+    /// openable window goes away.
+    var onClose: (() -> Void)?
+
+    init(store: Store, focus: FocusTimer, pomodoro: PomodoroEngine) {
         self.store = store
         self.focus = focus
+        self.pomodoro = pomodoro
     }
 
     func show() {
@@ -18,6 +25,7 @@ final class TasksWindowController: NSObject, NSWindowDelegate {
             let root = TasksWindowView()
                 .environmentObject(store)
                 .environmentObject(focus)
+                .environmentObject(pomodoro)
 
             let win = NSWindow(
                 contentRect: NSRect(x: 0, y: 0, width: 760, height: 480),
@@ -53,5 +61,6 @@ final class TasksWindowController: NSObject, NSWindowDelegate {
 
     func windowWillClose(_ notification: Notification) {
         window = nil
+        onClose?()
     }
 }
