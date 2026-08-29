@@ -34,13 +34,13 @@ final class CalendarService {
         catch { return false }
     }
 
-    /// All events scheduled for today, sorted by start time, across all
+    /// All events scheduled on the given day, sorted by start time, across all
     /// calendars the user has granted access to. Returns an empty array when
     /// the user hasn't granted access.
-    func todaysEvents() -> [EKEvent] {
+    func events(on date: Date) -> [EKEvent] {
         guard authState() == .authorized else { return [] }
         let cal = Calendar.current
-        let start = cal.startOfDay(for: Date())
+        let start = cal.startOfDay(for: date)
         let end = cal.date(byAdding: .day, value: 1, to: start) ?? start
         let predicate = store.predicateForEvents(withStart: start, end: end, calendars: nil)
         return store.events(matching: predicate)

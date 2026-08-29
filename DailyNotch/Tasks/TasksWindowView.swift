@@ -89,9 +89,10 @@ struct TasksWindowView: View {
         }
         .onAppear {
             consumePendingOpen()
-            calendar.refresh()
+            calendar.refresh(for: selectedDate)
         }
         .onChange(of: store.pendingOpenTaskID) { _, _ in consumePendingOpen() }
+        .onChange(of: selectedDate) { _, newDate in calendar.refresh(for: newDate) }
     }
 
     /// The task list: inner Day/Unscheduled toggle, the drag-to-reorder list,
@@ -220,7 +221,7 @@ struct TasksWindowView: View {
     private var eventsList: some View {
         VStack(alignment: .leading, spacing: 6) {
             HStack {
-                Text("Today")
+                Text(headerTitle)
                     .font(.system(size: 12, weight: .semibold))
                     .foregroundStyle(Theme.textSecondary)
                 Spacer()

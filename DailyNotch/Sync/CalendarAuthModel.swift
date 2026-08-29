@@ -9,18 +9,23 @@ final class CalendarAuthModel: ObservableObject {
     @Published var state: CalendarService.AuthState = .notDetermined
     @Published var events: [EKEvent] = []
 
-    init() { refresh() }
+    /// The day whose events are currently loaded. Kept so `requestAccess()`
+    /// can refresh the same day the view is showing after a grant.
+    private var loadedDate = Date()
 
-    /// Re-read the current auth state and (if authorized) the events list.
-    func refresh() {
+    init() { refresh(for: loadedDate) }
+
+    /// Re-read the current auth state and (if authorized) the events for `date`.
+    func refresh(for date: Date) {
+        loadedDate = date
         state = CalendarService.shared.authState()
-        events = CalendarService.shared.todaysEvents()
+        events = CalendarService.shared.events(on: date)
     }
 
     /// Request EventKit access and refresh on completion. No-op if already
     /// authorized or denied — the system prompt only shows once.
     func requestAccess() async {
         _ = await CalendarService.shared.requestAccess()
-        refresh()
+        refresh(for: loadedDate)
     }
 }
