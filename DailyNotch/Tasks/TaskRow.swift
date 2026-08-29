@@ -50,7 +50,13 @@ struct TaskRow: View {
                 chip(icon: "calendar", text: Calendar.current.isDateInToday(date)
                      ? "Today" : date.formatted(.dateTime.month().day()))
             }
-            chip(icon: "clock", text: task.estimateLabel)
+            // Inline time editor — tapping opens the popover, changes persist
+            // back to the store immediately.
+            FocusTimePicker(
+                minutes: estimateBinding,
+                range: FocusSettings.focusRange,
+                presets: [5, 10, 15, 25, 30, 45, 60, 90]
+            )
 
             iconButton(isRunningThis && focus.state == .running ? "pause.fill" : "play.fill",
                        bg: isRunningThis && focus.state == .running ? Theme.danger : Theme.accent) {
@@ -58,10 +64,11 @@ struct TaskRow: View {
             }
             iconButton("trash", bg: .clear, fg: Theme.textSecondary) { store.delete(task) }
 
-            // Drag handle — six dots in a 2×3 grid. Only this corner drags.
+            // Drag handle — six dots in a 2×3 grid. Only this corner drags;
+            // minimumDistance: 3 keeps a stray click from flashing the row.
             DragHandle()
                 .gesture(
-                    DragGesture(minimumDistance: 0, coordinateSpace: .local)
+                    DragGesture(minimumDistance: 3, coordinateSpace: .local)
                         .onChanged { value in
                             if !isDragging { onDragStart() }
                             onDragChanged(value.translation.height)
@@ -70,7 +77,24 @@ struct TaskRow: View {
                 )
         }
         .padding(10)
-        .background(Theme.panel, in: RoundedRectangle(cornerRadius: 12))
+        .background(isDragging ? Theme.panelHover : Theme.panel,
+                    in: RoundedRectangle(cornerRadius: 12))
+        .scaleEffect(isDragging ? 1.02 : 1.0)
+        .animation(.easeOut(duration: 0.12), value: isDragging)
+    }
+
+    /// Two-way binding that writes the new estimate back to the store as soon
+    /// as the picker mutates it (the popover's +/- and preset chips both bind
+    /// through this).
+    private var estimateBinding: Binding<Int> {
+        Binding(
+            get: { task.estimateMinutes },
+            set: { newValue in
+                var updated = task
+                updated.estimateMinutes = newValue
+                store.update(updated)
+            }
+        )
     }
 
     private func chip(icon: String, text: String) -> some View {
@@ -98,22 +122,30 @@ struct TaskRow: View {
 }
 
 /// Six dots in a 2×3 grid. Used as the drag handle in both the notch and
-/// the Tasks window. Slightly larger here (3px dots, 16×16 frame) because
-/// the Tasks window has more room than the notch pill.
+/// the Tasks window. Hover state lifts opacity and adds a soft background
+/// so users can tell it's grabbable before they commit to a drag.
 struct DragHandle: View {
+    @State private var isHovered = false
+
     var body: some View {
         VStack(spacing: 3) {
             HStack(spacing: 3) { dot; dot }
             HStack(spacing: 3) { dot; dot }
             HStack(spacing: 3) { dot; dot }
         }
-        .frame(width: 16, height: 16)
+        .frame(width: 22, height: 22)
+        .background(
+            RoundedRectangle(cornerRadius: 5)
+                .fill(Color.white.opacity(isHovered ? 0.10 : 0.04))
+        )
         .contentShape(Rectangle())
+        .onHover { isHovered = $0 }
+        .help("Drag to reorder")
     }
 
     private var dot: some View {
         Circle()
-            .fill(Theme.textSecondary.opacity(0.55))
-            .frame(width: 3, height: 3)
+            .fill(Theme.textSecondary.opacity(isHovered ? 0.9 : 0.55))
+            .frame(width: 3.5, height: 3.5)
     }
 }
