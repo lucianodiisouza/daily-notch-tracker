@@ -194,11 +194,12 @@ private struct TodoRow: View {
             Spacer(minLength: 6)
 
             // Inline time editor — tap to change the estimate without opening
-            // the full task form. Done tasks still show the chip dimmed.
+            // the full task form. Six presets keep the popover from clipping
+            // the last chip (it has to fit a compact popover on the notch).
             FocusTimePicker(
                 minutes: estimateBinding,
                 range: FocusSettings.focusRange,
-                presets: [5, 10, 15, 25, 30, 45, 60, 90]
+                presets: [10, 15, 25, 30, 45, 60]
             )
 
             Button {

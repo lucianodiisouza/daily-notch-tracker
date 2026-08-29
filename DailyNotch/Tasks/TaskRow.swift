@@ -51,11 +51,12 @@ struct TaskRow: View {
                      ? "Today" : date.formatted(.dateTime.month().day()))
             }
             // Inline time editor — tapping opens the popover, changes persist
-            // back to the store immediately.
+            // back to the store immediately. Six presets keep the popover
+            // from clipping the last chip.
             FocusTimePicker(
                 minutes: estimateBinding,
                 range: FocusSettings.focusRange,
-                presets: [5, 10, 15, 25, 30, 45, 60, 90]
+                presets: [10, 15, 25, 30, 45, 60]
             )
 
             iconButton(isRunningThis && focus.state == .running ? "pause.fill" : "play.fill",
