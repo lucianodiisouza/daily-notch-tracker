@@ -9,12 +9,17 @@ struct TasksWindowView: View {
     @StateObject private var calendar = CalendarAuthModel()
 
     @State private var selectedDate = Date()
+    @State private var mainTab: MainTab = .todo
     @State private var tab: Tab = .day
     @State private var showAddForm = false
     @State private var draftTitle = ""
     @State private var draftNotes = ""
     @State private var editingTask: Task?
     @State private var showSettings = false
+
+    // Focus management for the add-task form. Set to true when the form
+    // appears so the user can start typing the title without a second click.
+    @FocusState private var titleFocused: Bool
 
     // Custom drag bookkeeping — same shape as the notch so a reorder feels
     // consistent in both surfaces. `listedTasks` is the filtered+sorted
@@ -25,6 +30,7 @@ struct TasksWindowView: View {
     private let rowGap: CGFloat = 8
     private let rowHeight: CGFloat = 60
 
+    enum MainTab: String, CaseIterable { case todo = "Todo", pomodoro = "Pomodoro" }
     enum Tab: String, CaseIterable { case day = "Day", unscheduled = "Unscheduled" }
 
     private var listedTasks: [Task] {
@@ -36,7 +42,7 @@ struct TasksWindowView: View {
             // ---- Left: calendar ----
             VStack(spacing: 12) {
                 HStack {
-                    Label("Tasks", systemImage: "checklist")
+                    Text("Tasks")
                         .font(.system(size: 14, weight: .semibold))
                         .foregroundStyle(Theme.textPrimary)
                     Spacer()
@@ -44,6 +50,8 @@ struct TasksWindowView: View {
                         Image(systemName: "gearshape")
                             .font(.system(size: 12, weight: .semibold))
                             .foregroundStyle(Theme.textSecondary)
+                            .frame(width: 22, height: 22)
+                            .contentShape(Rectangle())
                     }
                     .buttonStyle(.plain)
                     .help("Settings")
@@ -57,64 +65,26 @@ struct TasksWindowView: View {
                     .frame(maxWidth: .infinity)
                     .padding(.vertical, 8)
                     .background(Theme.panel, in: RoundedRectangle(cornerRadius: 10))
+                    .contentShape(Rectangle())
             }
             .padding(16)
             .frame(width: 320)
 
             Divider().overlay(Color.white.opacity(0.08))
 
-            // ---- Right: day list ----
+            // ---- Right: Todo | Pomodoro (half-half) ----
             VStack(alignment: .leading, spacing: 12) {
-                HStack {
-                    Text(headerTitle)
-                        .font(.system(size: 14, weight: .semibold))
-                        .foregroundStyle(Theme.textPrimary)
-                    Spacer()
-                    Picker("", selection: $tab) {
-                        ForEach(Tab.allCases, id: \.self) { Text($0.rawValue).tag($0) }
-                    }
-                    .pickerStyle(.segmented)
-                    .frame(width: 200)
-                    .labelsHidden()
+                Picker("", selection: $mainTab) {
+                    ForEach(MainTab.allCases, id: \.self) { Text($0.rawValue).tag($0) }
                 }
+                .pickerStyle(.segmented)
+                .labelsHidden()
 
-                ScrollView(.vertical, showsIndicators: false) {
-                    VStack(spacing: rowGap) {
-                        ForEach(Array(listedTasks.enumerated()), id: \.element.id) { index, task in
-                            TaskRow(
-                                task: task,
-                                index: index,
-                                isDragging: draggingFrom == index,
-                                onDragStart: { handleDragStart(index) },
-                                onDragChanged: { handleDragChanged($0) },
-                                onDragEnd: handleDragEnd,
-                                onOpen: { editingTask = task }
-                            )
-                            .offset(y: offsetForIndex(index))
-                            .zIndex(draggingFrom == index ? 1 : 0)
-                            .animation(.easeOut(duration: 0.18), value: targetIndex())
-                        }
-                    }
-                }
-                .frame(maxWidth: .infinity, maxHeight: .infinity)
-
-                calendarSection
-
-                Spacer(minLength: 0)
-
-                if showAddForm {
-                    addForm
-                } else {
-                    Button {
-                        withAnimation { showAddForm = true }
-                    } label: {
-                        Text("Add a task")
-                            .font(.system(size: 13))
-                            .foregroundStyle(Theme.textSecondary)
-                            .frame(maxWidth: .infinity, alignment: .leading)
-                            .padding(.vertical, 8)
-                    }
-                    .buttonStyle(.plain)
+                switch mainTab {
+                case .todo:
+                    todoPanel
+                case .pomodoro:
+                    PomodoroView()
                 }
             }
             .padding(16)
@@ -137,6 +107,68 @@ struct TasksWindowView: View {
             calendar.refresh()
         }
         .onChange(of: store.pendingOpenTaskID) { _, _ in consumePendingOpen() }
+    }
+
+    /// The Todo half: inner Day/Unscheduled toggle, the drag-to-reorder list,
+    /// the calendar event feed, and the inline add form.
+    @ViewBuilder private var todoPanel: some View {
+        VStack(alignment: .leading, spacing: 12) {
+            HStack {
+                Text(headerTitle)
+                    .font(.system(size: 14, weight: .semibold))
+                    .foregroundStyle(Theme.textPrimary)
+                Spacer()
+                Picker("", selection: $tab) {
+                    ForEach(Tab.allCases, id: \.self) { Text($0.rawValue).tag($0) }
+                }
+                .pickerStyle(.segmented)
+                .frame(width: 200)
+                .labelsHidden()
+            }
+
+            ScrollView(.vertical, showsIndicators: false) {
+                VStack(spacing: rowGap) {
+                    ForEach(Array(listedTasks.enumerated()), id: \.element.id) { index, task in
+                        TaskRow(
+                            task: task,
+                            index: index,
+                            isDragging: draggingFrom == index,
+                            onDragStart: { handleDragStart(index) },
+                            onDragChanged: { handleDragChanged($0) },
+                            onDragEnd: handleDragEnd,
+                            onOpen: { editingTask = task }
+                        )
+                        .offset(y: offsetForIndex(index))
+                        .opacity(draggingFrom != nil && draggingFrom != index ? 0.45 : 1.0)
+                        .zIndex(draggingFrom == index ? 1 : 0)
+                        .animation(.spring(response: 0.28, dampingFraction: 0.85),
+                                   value: targetIndex())
+                        .animation(.easeOut(duration: 0.12), value: draggingFrom)
+                    }
+                }
+            }
+            .frame(maxWidth: .infinity, maxHeight: .infinity)
+
+            calendarSection
+
+            Spacer(minLength: 0)
+
+            if showAddForm {
+                addForm
+            } else {
+                Button {
+                    withAnimation { showAddForm = true }
+                } label: {
+                    Text("Add a task")
+                        .font(.system(size: 13))
+                        .foregroundStyle(Theme.textSecondary)
+                        .frame(maxWidth: .infinity, alignment: .leading)
+                        .padding(.vertical, 8)
+                        .contentShape(Rectangle())
+                }
+                .buttonStyle(.plain)
+            }
+        }
     }
 
     // MARK: - Calendar section
@@ -192,6 +224,7 @@ struct TasksWindowView: View {
                     .font(.system(size: 11, weight: .semibold))
                     .foregroundStyle(Theme.accent)
                     .padding(.top, 2)
+                    .contentShape(Rectangle())
             }
             Spacer(minLength: 0)
         }
@@ -253,9 +286,11 @@ struct TasksWindowView: View {
         VStack(spacing: 8) {
             TextField("Task title", text: $draftTitle)
                 .textFieldStyle(.plain)
+                .focused($titleFocused)
                 .padding(10)
                 .background(Theme.panel, in: RoundedRectangle(cornerRadius: 8))
                 .overlay(RoundedRectangle(cornerRadius: 8).stroke(Theme.accent, lineWidth: 1))
+                .onSubmit { commitDraft() }
             HStack(spacing: 8) {
                 TextField("Notes (optional)", text: $draftNotes)
                     .textFieldStyle(.plain)
@@ -267,14 +302,19 @@ struct TasksWindowView: View {
                     .foregroundStyle(.white)
                     .padding(.horizontal, 18).padding(.vertical, 10)
                     .background(Theme.accent, in: RoundedRectangle(cornerRadius: 8))
+                    .contentShape(Rectangle())
                 Button("Cancel") { resetDraft() }
                     .buttonStyle(.plain)
                     .font(.system(size: 13))
                     .foregroundStyle(Theme.textSecondary)
                     .padding(.horizontal, 14).padding(.vertical, 10)
                     .background(Theme.panel, in: RoundedRectangle(cornerRadius: 8))
+                    .contentShape(Rectangle())
             }
         }
+        // Focus the title field as soon as the form is in the hierarchy so
+        // the user can start typing immediately after tapping "Add a task".
+        .onAppear { titleFocused = true }
     }
 
     private func commitDraft() {
@@ -315,8 +355,18 @@ struct TasksWindowView: View {
         let total = listedTasks.count
         guard total > 0 else { return 0 }
         let stride = rowHeight + rowGap
-        let rowsMoved = Int((dragOffset / stride).rounded())
-        return max(0, min(total - 1, from + rowsMoved))
+        // Center-based: the row whose center is closest to the dragged row's
+        // center wins. No half-stride rounding flicker — the target only
+        // flips when the dragged row's center actually crosses a neighbor's.
+        let draggedCenter = CGFloat(from) * stride + rowHeight / 2 + dragOffset
+        var best = from
+        var bestDist = CGFloat.greatestFiniteMagnitude
+        for i in 0..<total {
+            let center = CGFloat(i) * stride + rowHeight / 2
+            let d = abs(draggedCenter - center)
+            if d < bestDist { bestDist = d; best = i }
+        }
+        return best
     }
 
     private func offsetForIndex(_ index: Int) -> CGFloat {
