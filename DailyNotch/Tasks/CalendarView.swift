@@ -1,12 +1,20 @@
 import SwiftUI
 
 /// Simple month grid with prev/next navigation; taps select a day.
+/// Layout notes:
+/// - Two-letter weekday labels so Saturday and Sunday don't both read "S".
+/// - Today gets a tiny accent dot under the number, so it's visible even
+///   when it isn't the selected day.
+/// - The grid uses indexed IDs (not `Date?.self`) so the leading empty
+///   cells don't collide and get deduped by SwiftUI's diff.
 struct CalendarView: View {
     @Binding var selectedDate: Date
     @State private var visibleMonth: Date = Date()
 
     private let cal = Calendar.current
-    private let weekdays = ["M", "T", "W", "T", "F", "S", "S"]
+    private let weekdays = ["Mo", "Tu", "We", "Th", "Fr", "Sa", "Su"]
+    private let cellHeight: CGFloat = 32
+    private let dotSize: CGFloat = 3
 
     var body: some View {
         VStack(spacing: 10) {
@@ -30,12 +38,12 @@ struct CalendarView: View {
             }
 
             let columns = Array(repeating: GridItem(.flexible(), spacing: 4), count: 7)
-            LazyVGrid(columns: columns, spacing: 6) {
-                ForEach(monthCells, id: \.self) { day in
+            LazyVGrid(columns: columns, spacing: 4) {
+                ForEach(Array(monthCells.enumerated()), id: \.offset) { _, day in
                     if let day {
                         dayCell(day)
                     } else {
-                        Color.clear.frame(height: 30)
+                        Color.clear.frame(height: cellHeight)
                     }
                 }
             }
@@ -48,15 +56,23 @@ struct CalendarView: View {
         return Button {
             selectedDate = day
         } label: {
-            Text("\(cal.component(.day, from: day))")
-                .font(.system(size: 12, weight: isToday ? .bold : .regular))
-                .foregroundStyle(isSelected ? .white : Theme.textPrimary)
-                .frame(maxWidth: .infinity, minHeight: 30)
-                .background(
-                    Circle()
-                        .fill(isSelected ? Theme.accent : .clear)
-                        .frame(width: 28, height: 28)
-                )
+            VStack(spacing: 2) {
+                Text("\(cal.component(.day, from: day))")
+                    .font(.system(size: 12, weight: isToday ? .bold : .regular))
+                    .foregroundStyle(isSelected ? .white : Theme.textPrimary)
+                // Today marker: tiny accent dot only when the cell isn't
+                // already filled with the selected-color circle.
+                Circle()
+                    .fill(isToday && !isSelected ? Theme.accent : .clear)
+                    .frame(width: dotSize, height: dotSize)
+            }
+            .frame(maxWidth: .infinity, minHeight: cellHeight)
+            .background(
+                Circle()
+                    .fill(isSelected ? Theme.accent : .clear)
+                    .frame(width: 26, height: 26)
+            )
+            .contentShape(Rectangle())
         }
         .buttonStyle(.plain)
     }
@@ -67,6 +83,7 @@ struct CalendarView: View {
                 .font(.system(size: 11, weight: .semibold))
                 .foregroundStyle(Theme.textSecondary)
                 .frame(width: 24, height: 24)
+                .contentShape(Rectangle())
         }
         .buttonStyle(.plain)
     }
