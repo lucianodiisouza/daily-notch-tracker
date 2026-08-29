@@ -36,7 +36,7 @@ struct TaskDetailView: View {
                     .lineLimit(2...5)
             }
 
-            HStack(spacing: 12) {
+            HStack(alignment: .top, spacing: 12) {
                 // Focus-time editor.
                 field("Focus time") {
                     Stepper(value: $draft.estimateMinutes, in: 5...180, step: 5) {
@@ -50,6 +50,7 @@ struct TaskDetailView: View {
                         get: { draft.scheduledDate ?? Date() },
                         set: { draft.scheduledDate = $0 }),
                         displayedComponents: .date)
+                    .datePickerStyle(.field)
                     .labelsHidden()
                 }
             }
@@ -58,8 +59,7 @@ struct TaskDetailView: View {
                 Text("Completed").font(.system(size: 13)).foregroundStyle(Theme.textPrimary)
             }
             .toggleStyle(.switch)
-
-            Spacer(minLength: 0)
+            .padding(.top, 2)
 
             HStack {
                 Button(role: .destructive) {
@@ -82,7 +82,8 @@ struct TaskDetailView: View {
             }
         }
         .padding(20)
-        .frame(width: 420, height: 360)
+        .frame(width: 420)
+        .fixedSize(horizontal: false, vertical: true)
         .background(Color.black)
         .preferredColorScheme(.dark)
     }
