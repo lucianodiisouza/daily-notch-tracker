@@ -45,9 +45,15 @@ struct RootNotchView: View {
         if vm.expanded || focus.isActive {
             // Collapsed: hug tightly (small insets, low corner) so the short
             // side segments still read. Expanded: roomier inset.
-            let shape = NotchTrayShape(inset: vm.expanded ? 7 : 6,
+            //
+            // The tray's bottom corner radius must stay <= pillCorner - inset, or
+            // its rounded corners bulge past the pill's rounded bottom and get
+            // clipped flat — reading as a "cut" border (most obvious when idle,
+            // with no bright progress fill drawn over it).
+            let inset: CGFloat = vm.expanded ? 7 : 6
+            let shape = NotchTrayShape(inset: inset,
                                        topInset: vm.expanded ? 7 : 5,
-                                       corner: vm.expanded ? 20 : 8)
+                                       corner: max(4, pillCorner - inset))
             let style = StrokeStyle(lineWidth: trayLineWidth, lineCap: .round)
             ZStack {
                 // Full track, both sides + bottom, always visible.
