@@ -1,20 +1,26 @@
 import SwiftUI
 
-/// The panel's root. The black rounded backing is provided by the window's
-/// CALayer (see NotchWindowController) so we only draw content + the accent
-/// tray here. Swaps between the collapsed timer pill and the expanded dashboard.
+/// The panel's root. Paints the black pill (square top, rounded bottom) in
+/// SwiftUI so it stays opaque, then draws the content and the accent tray on
+/// top. Swaps between the collapsed timer pill and the expanded dashboard.
 struct RootNotchView: View {
     @EnvironmentObject private var vm: NotchViewModel
     @EnvironmentObject private var focus: FocusTimer
 
+    /// Bottom-corner radius: roomy when expanded, tight when collapsed (a large
+    /// radius on the short pill would swallow the tray's side segments).
+    private var pillCorner: CGFloat { vm.expanded ? Theme.notchCorner : 12 }
+
     var body: some View {
         ZStack(alignment: .top) {
+            NotchShape(bottomRadius: pillCorner).fill(Color.black)
             content
             trayOverlay
         }
         // Fill whatever size the NSWindow animates to — the window owns the
         // frame animation; the view must NOT animate its own size too.
         .frame(maxWidth: .infinity, maxHeight: .infinity)
+        .clipShape(NotchShape(bottomRadius: pillCorner))
         .contentShape(Rectangle())
         .onHover { hovering in vm.hover(hovering) }
     }
