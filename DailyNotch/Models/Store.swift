@@ -84,9 +84,13 @@ final class Store: ObservableObject {
 
     // MARK: - Queries
 
-    /// Sort key: prefer user-controlled `sortOrder`; break ties on `createdAt`
-    /// so legacy tasks (sortOrder == 0) and same-rank new tasks stay stable.
-    private func sortKey(_ t: Task) -> (Double, Date) { (t.sortOrder, t.createdAt) }
+    /// Sort key: undone first, then by user-controlled `sortOrder`, then by
+    /// `createdAt` as a stable tiebreaker. The `isDone` flag is bool-
+    /// comparable (false < true), so checked items naturally sink to the
+    /// bottom of the list.
+    private func sortKey(_ t: Task) -> (Bool, Double, Date) {
+        (t.isDone, t.sortOrder, t.createdAt)
+    }
 
     func tasks(on day: Date) -> [Task] {
         let cal = Calendar.current
