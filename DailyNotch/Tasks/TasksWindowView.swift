@@ -16,6 +16,15 @@ struct TasksWindowView: View {
     @State private var editingTask: Task?
     @State private var showSettings = false
 
+    // Custom drag bookkeeping — same shape as the notch so a reorder feels
+    // consistent in both surfaces. `listedTasks` is the filtered+sorted
+    // array the user is looking at, and `targetIndex` is where the dragged
+    // row would land if released right now.
+    @State private var draggingFrom: Int?
+    @State private var dragOffset: CGFloat = 0
+    private let rowGap: CGFloat = 8
+    private let rowHeight: CGFloat = 60
+
     enum Tab: String, CaseIterable { case day = "Day", unscheduled = "Unscheduled" }
 
     private var listedTasks: [Task] {
@@ -69,19 +78,24 @@ struct TasksWindowView: View {
                     .labelsHidden()
                 }
 
-                List {
-                    ForEach(listedTasks) { task in
-                        TaskRow(task: task) { editingTask = task }
-                            .listRowBackground(Color.clear)
-                            .listRowSeparator(.hidden)
-                            .listRowInsets(EdgeInsets(top: 4, leading: 0, bottom: 4, trailing: 0))
-                    }
-                    .onMove { source, destination in
-                        store.moveTasks(in: listedTasks, from: source, to: destination)
+                ScrollView(.vertical, showsIndicators: false) {
+                    VStack(spacing: rowGap) {
+                        ForEach(Array(listedTasks.enumerated()), id: \.element.id) { index, task in
+                            TaskRow(
+                                task: task,
+                                index: index,
+                                isDragging: draggingFrom == index,
+                                onDragStart: { handleDragStart(index) },
+                                onDragChanged: { handleDragChanged($0) },
+                                onDragEnd: handleDragEnd,
+                                onOpen: { editingTask = task }
+                            )
+                            .offset(y: offsetForIndex(index))
+                            .zIndex(draggingFrom == index ? 1 : 0)
+                            .animation(.easeOut(duration: 0.18), value: targetIndex())
+                        }
                     }
                 }
-                .listStyle(.plain)
-                .scrollContentBackground(.hidden)
                 .frame(maxWidth: .infinity, maxHeight: .infinity)
 
                 calendarSection
@@ -272,5 +286,46 @@ struct TasksWindowView: View {
     private func resetDraft() {
         draftTitle = ""; draftNotes = ""
         withAnimation { showAddForm = false }
+    }
+
+    // MARK: - Custom drag bookkeeping (mirrors the notch panel)
+
+    private func handleDragStart(_ index: Int) {
+        draggingFrom = index
+        dragOffset = 0
+    }
+
+    private func handleDragChanged(_ offset: CGFloat) {
+        dragOffset = offset
+    }
+
+    private func handleDragEnd() {
+        if let from = draggingFrom {
+            let to = targetIndex()
+            if to != from {
+                store.moveTasks(in: listedTasks, from: IndexSet(integer: from), to: to)
+            }
+        }
+        draggingFrom = nil
+        dragOffset = 0
+    }
+
+    private func targetIndex() -> Int {
+        guard let from = draggingFrom else { return 0 }
+        let total = listedTasks.count
+        guard total > 0 else { return 0 }
+        let stride = rowHeight + rowGap
+        let rowsMoved = Int((dragOffset / stride).rounded())
+        return max(0, min(total - 1, from + rowsMoved))
+    }
+
+    private func offsetForIndex(_ index: Int) -> CGFloat {
+        guard let from = draggingFrom else { return 0 }
+        if index == from { return dragOffset }
+        let target = targetIndex()
+        let stride = rowHeight + rowGap
+        if target > from, index > from, index <= target { return -stride }
+        if target < from, index < from, index >= target { return stride }
+        return 0
     }
 }

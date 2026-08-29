@@ -2,8 +2,14 @@ import SwiftUI
 
 /// A row in the Tasks window: checkbox, title, due chip, estimate, and
 /// start / delete controls. Tapping the row opens the task's detail sheet.
+/// Drag handle in the corner is the only draggable area.
 struct TaskRow: View {
     let task: Task
+    let index: Int
+    let isDragging: Bool
+    let onDragStart: () -> Void
+    let onDragChanged: (CGFloat) -> Void
+    let onDragEnd: () -> Void
     var onOpen: () -> Void = {}
 
     @EnvironmentObject private var store: Store
@@ -51,6 +57,17 @@ struct TaskRow: View {
                 if isRunningThis { focus.togglePause() } else { focus.start(task: task) }
             }
             iconButton("trash", bg: .clear, fg: Theme.textSecondary) { store.delete(task) }
+
+            // Drag handle — six dots in a 2×3 grid. Only this corner drags.
+            DragHandle()
+                .gesture(
+                    DragGesture(minimumDistance: 0, coordinateSpace: .local)
+                        .onChanged { value in
+                            if !isDragging { onDragStart() }
+                            onDragChanged(value.translation.height)
+                        }
+                        .onEnded { _ in onDragEnd() }
+                )
         }
         .padding(10)
         .background(Theme.panel, in: RoundedRectangle(cornerRadius: 12))
@@ -77,5 +94,26 @@ struct TaskRow: View {
                 .background(bg, in: Circle())
         }
         .buttonStyle(.plain)
+    }
+}
+
+/// Six dots in a 2×3 grid. Used as the drag handle in both the notch and
+/// the Tasks window. Slightly larger here (3px dots, 16×16 frame) because
+/// the Tasks window has more room than the notch pill.
+struct DragHandle: View {
+    var body: some View {
+        VStack(spacing: 3) {
+            HStack(spacing: 3) { dot; dot }
+            HStack(spacing: 3) { dot; dot }
+            HStack(spacing: 3) { dot; dot }
+        }
+        .frame(width: 16, height: 16)
+        .contentShape(Rectangle())
+    }
+
+    private var dot: some View {
+        Circle()
+            .fill(Theme.textSecondary.opacity(0.55))
+            .frame(width: 3, height: 3)
     }
 }
