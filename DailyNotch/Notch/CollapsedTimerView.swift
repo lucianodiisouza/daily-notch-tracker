@@ -11,7 +11,9 @@ struct CollapsedTimerView: View {
     var body: some View {
         if focus.isActive {
             VStack(spacing: 0) {
-                // ---- ears (aligned to the notch height) ----
+                // ---- ears (flexible so the row always fits the window width;
+                //      fixed-width ears would overflow and push the tray sides
+                //      off-screen) ----
                 HStack(spacing: 0) {
                     // left ear: countdown, pushed toward the notch
                     HStack(spacing: 6) {
@@ -23,8 +25,8 @@ struct CollapsedTimerView: View {
                             .foregroundStyle(Theme.textPrimary)
                             .monospacedDigit()
                     }
-                    .frame(width: vm.activeEarWidth, alignment: .trailing)
-                    .padding(.trailing, 12)
+                    .frame(maxWidth: .infinity, alignment: .trailing)
+                    .padding(.trailing, 14)
 
                     // center: the physical notch — must stay empty
                     Color.clear.frame(width: vm.notchWidth)
@@ -39,9 +41,10 @@ struct CollapsedTimerView: View {
                             .font(.system(size: 11))
                             .foregroundStyle(Theme.accent)
                     }
-                    .frame(width: vm.activeEarWidth, alignment: .leading)
-                    .padding(.leading, 12)
+                    .frame(maxWidth: .infinity, alignment: .leading)
+                    .padding(.leading, 14)
                 }
+                .frame(maxWidth: .infinity)
                 .frame(height: vm.notchHeight)
 
                 // Progress lives in the accent tray (drawn in RootNotchView);
