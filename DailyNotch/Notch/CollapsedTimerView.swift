@@ -44,18 +44,9 @@ struct CollapsedTimerView: View {
                 }
                 .frame(height: vm.notchHeight)
 
-                // ---- progress bar, below the notch line so it stays visible ----
-                GeometryReader { geo in
-                    ZStack(alignment: .leading) {
-                        Capsule().fill(Color.white.opacity(0.10))
-                        Capsule().fill(Theme.accent)
-                            .frame(width: max(4, geo.size.width * focus.progress))
-                    }
-                }
-                .frame(height: 3)
-                .padding(.horizontal, 12)
-                .padding(.bottom, 6)
-                .padding(.top, 4)
+                // Progress lives in the accent tray (drawn in RootNotchView);
+                // this spacer just reserves the room below the notch line.
+                Spacer(minLength: 0)
             }
         } else {
             Color.clear
