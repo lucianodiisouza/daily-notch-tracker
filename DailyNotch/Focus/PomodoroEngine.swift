@@ -72,9 +72,9 @@ final class PomodoroEngine: ObservableObject {
 
     func togglePause() {
         switch state {
-        case .running: pause()
-        case .paused:  resume()
-        default:       break
+        case .running:            pause()
+        case .paused:             resume()
+        case .idle, .finished:    start()
         }
     }
 
