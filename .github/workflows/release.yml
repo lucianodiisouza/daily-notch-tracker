@@ -1,0 +1,119 @@
+name: release
+
+on:
+  push:
+    tags:
+      - "v*"
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    name: Build, package, notarize, publish
+    runs-on: macos-14
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Resolve version
+        id: version
+        run: |
+          TAG="${GITHUB_REF_NAME}"
+          VERSION="${TAG#v}"
+          echo "tag=${TAG}" >> "$GITHUB_OUTPUT"
+          echo "version=${VERSION}" >> "$GITHUB_OUTPUT"
+          echo "Tag: ${TAG}  Version: ${VERSION}"
+
+      - name: Show toolchain
+        run: |
+          sw_vers
+          xcodebuild -version
+
+      - name: Build (Release, ad-hoc)
+        run: |
+          set -o pipefail
+          xcodebuild \
+            -project DailyNotch.xcodeproj \
+            -scheme DailyNotch \
+            -configuration Release \
+            -destination 'platform=macOS' \
+            CODE_SIGN_IDENTITY="-" \
+            CODE_SIGNING_REQUIRED=NO \
+            CODE_SIGNING_ALLOWED=YES \
+            clean build 2>&1 | tail -40
+
+      - name: Locate .app
+        id: locate
+        run: |
+          APP_PATH=$(find ~/Library/Developer/Xcode/DerivedData -type d -name "DailyNotch.app" -path "*Release*" | head -1)
+          if [ -z "$APP_PATH" ]; then
+            echo "::error::DailyNotch.app not found in DerivedData"
+            exit 1
+          fi
+          echo "app_path=${APP_PATH}" >> "$GITHUB_OUTPUT"
+          echo "Found app at: ${APP_PATH}"
+
+      - name: Ad-hoc re-sign the .app
+        run: |
+          APP_PATH="${{ steps.locate.outputs.app_path }}"
+          codesign --force --deep --sign - "${APP_PATH}"
+          codesign --verify --deep --strict "${APP_PATH}" || true
+
+      - name: Stage DMG contents
+        run: |
+          APP_PATH="${{ steps.locate.outputs.app_path }}"
+          STAGE="dmg-staging"
+          rm -rf "${STAGE}"
+          mkdir -p "${STAGE}"
+          cp -R "${APP_PATH}" "${STAGE}/"
+          ln -s /Applications "${STAGE}/Applications"
+          ls -la "${STAGE}"
+
+      - name: Create DMG
+        run: |
+          STAGE="dmg-staging"
+          OUT="DailyNotch-${{ steps.version.outputs.version }}.dmg"
+          hdiutil create \
+            -volname "DailyNotch ${{ steps.version.outputs.version }}" \
+            -srcfolder "${STAGE}" \
+            -ov \
+            -format UDZO \
+            "${OUT}"
+          ls -la "${OUT}"
+          echo "dmg=${OUT}" >> "$GITHUB_OUTPUT"
+
+      - name: Notarize (when App Store Connect API key is configured)
+        if: ${{ env.AC_API_KEY_ID != '' && env.AC_API_KEY_ISSUER_ID != '' && env.AC_API_KEY_P8 != '' }}
+        env:
+          AC_API_KEY_ID: ${{ secrets.AC_API_KEY_ID }}
+          AC_API_KEY_ISSUER_ID: ${{ secrets.AC_API_KEY_ISSUER_ID }}
+          AC_API_KEY_P8: ${{ secrets.AC_API_KEY_P8 }}
+        run: |
+          set -euo pipefail
+          KEY_FILE="$(mktemp -t ac_key).p8"
+          trap 'rm -f "${KEY_FILE}"' EXIT
+          printf '%s' "${AC_API_KEY_P8}" > "${KEY_FILE}"
+
+          DMG="${{ steps.version.outputs.dmg }}"
+          xcrun notarytool submit "${DMG}" \
+            --key "${KEY_FILE}" \
+            --key-id "${AC_API_KEY_ID}" \
+            --issuer "${AC_API_KEY_ISSUER_ID}" \
+            --wait
+          echo "Notarization complete."
+
+      - name: Publish GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ steps.version.outputs.tag }}
+          name: "DailyNotch ${{ steps.version.outputs.version }}"
+          generate_release_notes: true
+          draft: false
+          prerelease: ${{ contains(steps.version.outputs.version, '-') }}
+          files: ${{ steps.version.outputs.dmg }}
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
