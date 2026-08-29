@@ -29,19 +29,23 @@ struct RootNotchView: View {
         }
     }
 
-    /// The accent tray: a static inset frame when expanded, a live progress
-    /// track when a timer is running. Never shown for the bare idle notch.
+    /// The accent tray — identical treatment whether collapsed or expanded:
+    /// a faint full track (visible on BOTH sides + bottom) plus a bright fill
+    /// that grows with progress. Same line width in both states. Hidden only
+    /// for the bare idle notch.
+    private var trayLineWidth: CGFloat { 2.5 }
+
     @ViewBuilder private var trayOverlay: some View {
-        if vm.expanded {
-            NotchTrayShape(inset: 7, topInset: 7, corner: 20)
-                .stroke(Theme.accent, style: .init(lineWidth: 2, lineCap: .round))
-        } else if focus.isActive {
-            let shape = NotchTrayShape(inset: 6, topInset: 6, corner: 15)
+        if vm.expanded || focus.isActive {
+            let shape = NotchTrayShape(inset: 7, topInset: 7,
+                                       corner: vm.expanded ? 20 : 14)
+            let style = StrokeStyle(lineWidth: trayLineWidth, lineCap: .round)
             ZStack {
-                shape.stroke(Theme.accent.opacity(0.28),
-                             style: .init(lineWidth: 3, lineCap: .round))
-                shape.trim(from: 0, to: focus.progress)
-                    .stroke(Theme.accent, style: .init(lineWidth: 3, lineCap: .round))
+                // Full track, both sides + bottom, always visible.
+                shape.stroke(Theme.accent.opacity(0.35), style: style)
+                // Bright progress fill (0 when no timer is running).
+                shape.trim(from: 0, to: focus.isActive ? focus.progress : 0)
+                    .stroke(Theme.accent, style: style)
                     .animation(.linear(duration: 0.3), value: focus.progress)
             }
         }
