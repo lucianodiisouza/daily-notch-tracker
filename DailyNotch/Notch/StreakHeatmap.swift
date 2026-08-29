@@ -16,7 +16,7 @@ struct StreakHeatmap: View {
     var body: some View {
         VStack(alignment: .leading, spacing: 10) {
             HStack {
-                Label("Journey Streak", systemImage: "flame.fill")
+                Label("Activity", systemImage: "chart.bar.fill")
                     .font(.system(size: 12, weight: .semibold))
                     .foregroundStyle(Theme.textPrimary)
                 Spacer()

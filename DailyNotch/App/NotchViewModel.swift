@@ -32,7 +32,17 @@ final class NotchViewModel: ObservableObject {
     var collapsedHeight: CGFloat {
         focus.isActive ? notchHeight + 16 : notchHeight + 4
     }
-    var expandedHeight: CGFloat { 258 }
+
+    /// Fit the expanded panel to its content (the taller of the two columns)
+    /// so there's no dead space below. Caps the to-do list at 3 visible rows.
+    var expandedHeight: CGFloat {
+        let taskCount = min(3, max(store.tasks(on: Date()).count, 1))
+        let rowH: CGFloat = 52
+        let todoColumn = 22 + CGFloat(taskCount) * rowH
+            + CGFloat(max(0, taskCount - 1)) * 6 + 30   // header + rows + "Add a task"
+        let heatmapColumn: CGFloat = 22 + 74            // header + 4-row grid
+        return notchHeight + 4 + max(todoColumn, heatmapColumn) + 14
+    }
 
     var collapsedWidth: CGFloat {
         // Idle: hug the notch exactly (invisible). Active: notch + two ears.

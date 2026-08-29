@@ -16,8 +16,8 @@ struct NotchDashboardView: View {
         }
         .padding(.horizontal, 18)
         // Clear the physical notch: content starts below the notch height.
-        .padding(.top, vm.notchHeight + 6)
-        .padding(.bottom, 16)
+        .padding(.top, vm.notchHeight + 4)
+        .padding(.bottom, 14)
     }
 }
 
