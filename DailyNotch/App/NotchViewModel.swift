@@ -66,6 +66,17 @@ final class NotchViewModel: ObservableObject {
     /// flicker that happens when the window resizes out from under the cursor.
     private var collapseTask: DispatchWorkItem?
 
+    /// Number of open child windows (popovers, menus) that should keep the
+    /// panel expanded. A `.popover` presents in its own window, so moving the
+    /// cursor into it fires `.onHover(false)` on the panel — without this the
+    /// notch would collapse out from under the popover. Set by `begin/endHold`.
+    private var holdCount = 0
+
+    /// Whether the pointer is currently within the panel frame. Wired by the
+    /// window controller so we can re-evaluate collapse when a hold ends
+    /// (the popover window swallowed the panel's hover events while open).
+    var isPointerInside: () -> Bool = { false }
+
     /// Called from the SwiftUI `.onHover`. Expands immediately, collapses lazily.
     func hover(_ inside: Bool) {
         collapseTask?.cancel()
@@ -75,13 +86,35 @@ final class NotchViewModel: ObservableObject {
             guard !expanded else { return }
             withAnimation(.easeInEaseOut(duration: 0.24)) { expanded = true }
         } else {
-            let task = DispatchWorkItem { [weak self] in
-                guard let self, self.expanded else { return }
-                withAnimation(.easeInEaseOut(duration: 0.24)) { self.expanded = false }
-            }
-            collapseTask = task
-            DispatchQueue.main.asyncAfter(deadline: .now() + 0.4, execute: task)
+            scheduleCollapse()
         }
+    }
+
+    /// Keep the panel expanded while a popover/menu is open. Balanced by `endHold`.
+    func beginHold() {
+        holdCount += 1
+        collapseTask?.cancel()
+        collapseTask = nil
+    }
+
+    /// Release a hold. If nothing else holds the panel open and the pointer has
+    /// left the panel, collapse lazily — mirroring a normal mouse-exit.
+    func endHold() {
+        holdCount = max(0, holdCount - 1)
+        guard holdCount == 0, !isPointerInside() else { return }
+        scheduleCollapse()
+    }
+
+    private func scheduleCollapse() {
+        guard holdCount == 0 else { return }   // held open by a popover/menu
+        collapseTask?.cancel()
+        let task = DispatchWorkItem { [weak self] in
+            guard let self, self.expanded, self.holdCount == 0,
+                  !self.isPointerInside() else { return }
+            withAnimation(.easeInEaseOut(duration: 0.24)) { self.expanded = false }
+        }
+        collapseTask = task
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.4, execute: task)
     }
 }
 

@@ -30,6 +30,13 @@ final class NotchWindowController {
         hosting = NSHostingView(rootView: content)
         panel.contentView = hosting
 
+        // Let the view model tell whether the cursor is still over the panel when
+        // a popover closes — screen coords, bottom-left origin, same as the frame.
+        viewModel.isPointerInside = { [weak panel] in
+            guard let panel else { return false }
+            return panel.frame.contains(NSEvent.mouseLocation)
+        }
+
         // Re-anchor whenever the target size changes.
         viewModel.$expanded
             .receive(on: RunLoop.main)

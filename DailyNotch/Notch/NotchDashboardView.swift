@@ -200,7 +200,8 @@ private struct TodoRow: View {
             FocusTimePicker(
                 minutes: estimateBinding,
                 range: FocusSettings.focusRange,
-                presets: [10, 15, 25, 30, 45, 60]
+                presets: [10, 15, 25, 30, 45, 60],
+                onPopoverChange: { shown in shown ? vm.beginHold() : vm.endHold() }
             )
 
             Button {

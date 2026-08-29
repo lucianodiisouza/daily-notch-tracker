@@ -7,6 +7,10 @@ struct FocusTimePicker: View {
     @Binding var minutes: Int
     let range: ClosedRange<Int>
     let presets: [Int]
+    /// Fired when the popover opens (`true`) or closes (`false`). The notch uses
+    /// this to hold itself open while the popover — a separate child window — is
+    /// showing, so it doesn't collapse when the cursor moves into it.
+    var onPopoverChange: (Bool) -> Void = { _ in }
     @State private var popoverShown = false
 
     var body: some View {
@@ -33,6 +37,7 @@ struct FocusTimePicker: View {
         .popover(isPresented: $popoverShown, arrowEdge: .leading) {
             popoverContent
         }
+        .onChange(of: popoverShown) { _, shown in onPopoverChange(shown) }
     }
 
     private var popoverContent: some View {
