@@ -31,11 +31,14 @@ final class Store: ObservableObject {
 
     // MARK: - Task operations
 
-    func add(title: String, notes: String = "", estimate: Int = 25, date: Date? = Date()) {
+    /// Add a new task. `estimate` defaults to the user's current `focusMinutes`
+    /// setting; pass an explicit value to override per task.
+    func add(title: String, notes: String = "", estimate: Int? = nil, date: Date? = Date()) {
         guard !title.trimmingCharacters(in: .whitespaces).isEmpty else { return }
+        let est = estimate ?? settings.focusMinutes
         let nextOrder = (tasks.map(\.sortOrder).max() ?? 0) + 1024
         tasks.append(Task(title: title, notes: notes, scheduledDate: date,
-                          estimateMinutes: estimate, sortOrder: nextOrder))
+                          estimateMinutes: est, sortOrder: nextOrder))
         save()
     }
 
