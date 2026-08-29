@@ -30,17 +30,18 @@ final class NotchViewModel: ObservableObject {
     let activeEarWidth: CGFloat = 158
 
     var collapsedHeight: CGFloat {
-        focus.isActive ? notchHeight + 16 : notchHeight + 4
+        focus.isActive ? notchHeight + 22 : notchHeight
     }
 
-    /// Fit the expanded panel to its content (the taller of the two columns)
-    /// so there's no dead space below. Caps the to-do list at 3 visible rows.
+    /// Fixed height: always exactly two visible to-do rows (the list scrolls if
+    /// there are more) alongside the weekday activity grid.
+    static let todoRowHeight: CGFloat = 52
+    static let visibleTodoRows = 2
+
     var expandedHeight: CGFloat {
-        let taskCount = min(3, max(store.tasks(on: Date()).count, 1))
-        let rowH: CGFloat = 52
-        let todoColumn = 22 + CGFloat(taskCount) * rowH
-            + CGFloat(max(0, taskCount - 1)) * 6 + 30   // header + rows + "Add a task"
-        let heatmapColumn: CGFloat = 22 + 74            // header + 4-row grid
+        let rows = CGFloat(Self.visibleTodoRows)
+        let todoColumn = 22 + rows * Self.todoRowHeight + (rows - 1) * 6 + 30
+        let heatmapColumn: CGFloat = 22 + (7 * 16 + 6 * 4)   // header + 7-row grid
         return notchHeight + 4 + max(todoColumn, heatmapColumn) + 14
     }
 
