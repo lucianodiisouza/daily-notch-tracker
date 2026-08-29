@@ -18,14 +18,6 @@ struct SettingsView: View {
                 timerRow("Focus", minutes: $store.settings.focusMinutes,
                          range: FocusSettings.focusRange,
                          presets: [15, 25, 30, 45, 60, 90])
-                divider
-                timerRow("Short break", minutes: $store.settings.breakMinutes,
-                         range: FocusSettings.breakRange,
-                         presets: [1, 5, 10, 15, 30])
-                divider
-                timerRow("Long break", minutes: $store.settings.longBreakMinutes,
-                         range: FocusSettings.longBreakRange,
-                         presets: [10, 15, 20, 30, 45])
             }
             section("ALERTS") {
                 toggleRow("Notification when a focus block ends",

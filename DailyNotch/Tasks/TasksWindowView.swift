@@ -9,7 +9,6 @@ struct TasksWindowView: View {
     @StateObject private var calendar = CalendarAuthModel()
 
     @State private var selectedDate = Date()
-    @State private var mainTab: MainTab = .todo
     @State private var tab: Tab = .day
     @State private var showAddForm = false
     @State private var draftTitle = ""
@@ -30,7 +29,6 @@ struct TasksWindowView: View {
     private let rowGap: CGFloat = 8
     private let rowHeight: CGFloat = 60
 
-    enum MainTab: String, CaseIterable { case todo = "Todo", pomodoro = "Pomodoro" }
     enum Tab: String, CaseIterable { case day = "Day", unscheduled = "Unscheduled" }
 
     private var listedTasks: [Task] {
@@ -72,19 +70,10 @@ struct TasksWindowView: View {
 
             Divider().overlay(Color.white.opacity(0.08))
 
-            // ---- Right: Todo | Pomodoro (50/50) ----
-            VStack(alignment: .leading, spacing: 12) {
-                halfSplitTabs
-
-                switch mainTab {
-                case .todo:
-                    todoPanel
-                case .pomodoro:
-                    PomodoroView()
-                }
-            }
-            .padding(16)
-            .frame(maxWidth: .infinity, alignment: .topLeading)
+            // ---- Right: the day's task list ----
+            todoPanel
+                .padding(16)
+                .frame(maxWidth: .infinity, alignment: .topLeading)
         }
         .frame(minWidth: 760, minHeight: 480)
         .background(Color.black)
@@ -105,34 +94,7 @@ struct TasksWindowView: View {
         .onChange(of: store.pendingOpenTaskID) { _, _ in consumePendingOpen() }
     }
 
-    /// Custom 50/50 segmented tabs. The default `.segmented` Picker sizes
-    /// each segment to its content (so "Pomodoro" hogs the row and "Todo"
-    /// gets a sliver) — this guarantees each tab gets exactly half.
-    private var halfSplitTabs: some View {
-        HStack(spacing: 3) {
-            ForEach(MainTab.allCases, id: \.self) { option in
-                Button {
-                    withAnimation(.easeOut(duration: 0.12)) { mainTab = option }
-                } label: {
-                    Text(option.rawValue)
-                        .font(.system(size: 12, weight: .semibold))
-                        .foregroundStyle(mainTab == option ? .white : Theme.textSecondary)
-                        .frame(maxWidth: .infinity)
-                        .padding(.vertical, 6)
-                        .background(
-                            mainTab == option ? Theme.accent : Color.clear,
-                            in: RoundedRectangle(cornerRadius: 6)
-                        )
-                        .contentShape(Rectangle())
-                }
-                .buttonStyle(.plain)
-            }
-        }
-        .padding(3)
-        .background(Theme.panel, in: RoundedRectangle(cornerRadius: 8))
-    }
-
-    /// The Todo half: inner Day/Unscheduled toggle, the drag-to-reorder list,
+    /// The task list: inner Day/Unscheduled toggle, the drag-to-reorder list,
     /// the calendar event feed, and the inline add form.
     @ViewBuilder private var todoPanel: some View {
         VStack(alignment: .leading, spacing: 12) {

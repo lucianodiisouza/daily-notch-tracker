@@ -27,7 +27,6 @@ struct DailyNotchApp: App {
 final class AppDelegate: NSObject, NSApplicationDelegate {
     let store = Store()
     lazy var focus = FocusTimer(store: store)
-    lazy var pomodoro = PomodoroEngine(store: store)
     private var notchController: NotchWindowController?
     private var tasksController: TasksWindowController?
     private var settingsController: SettingsWindowController?
@@ -74,12 +73,12 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         let vm = NotchViewModel(store: store, focus: focus, metrics: .primary)
         vm.openTasksWindow = { [weak self] in self?.showTasksWindow() }
         viewModel = vm
-        notchController = NotchWindowController(viewModel: vm, pomodoro: pomodoro)
+        notchController = NotchWindowController(viewModel: vm)
     }
 
     func showTasksWindow() {
         if tasksController == nil {
-            let c = TasksWindowController(store: store, focus: focus, pomodoro: pomodoro)
+            let c = TasksWindowController(store: store, focus: focus)
             c.onClose = { [weak self] in self?.userWindowDidClose() }
             tasksController = c
             bumpUserWindowCount()

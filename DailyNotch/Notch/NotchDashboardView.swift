@@ -3,20 +3,11 @@ import SwiftUI
 /// Expanded hover panel: To-Do list on the left, streak heatmap on the right.
 struct NotchDashboardView: View {
     @EnvironmentObject private var vm: NotchViewModel
-    @State private var leftTab: LeftTab = .todo
-
-    enum LeftTab: String, CaseIterable { case todo = "Todo", pomodoro = "Pomodoro" }
 
     var body: some View {
         HStack(alignment: .top, spacing: 16) {
-            VStack(spacing: 10) {
-                halfSplitTabs
-                switch leftTab {
-                case .todo:     TodoPanel()
-                case .pomodoro: CompactPomodoroView()
-                }
-            }
-            .frame(maxWidth: .infinity, alignment: .leading)
+            TodoPanel()
+                .frame(maxWidth: .infinity, alignment: .leading)
 
             Rectangle()
                 .fill(Color.white.opacity(0.07))
@@ -28,32 +19,6 @@ struct NotchDashboardView: View {
         // Clear the physical notch: content starts below the notch height.
         .padding(.top, vm.notchHeight + 4)
         .padding(.bottom, 14)
-    }
-
-    /// Same 50/50 segmented control used in the Tasks window. Each tab gets
-    /// exactly half the available width.
-    private var halfSplitTabs: some View {
-        HStack(spacing: 3) {
-            ForEach(LeftTab.allCases, id: \.self) { option in
-                Button {
-                    withAnimation(.easeOut(duration: 0.12)) { leftTab = option }
-                } label: {
-                    Text(option.rawValue)
-                        .font(.system(size: 11, weight: .semibold))
-                        .foregroundStyle(leftTab == option ? .white : Theme.textSecondary)
-                        .frame(maxWidth: .infinity)
-                        .padding(.vertical, 5)
-                        .background(
-                            leftTab == option ? Theme.accent : Color.clear,
-                            in: RoundedRectangle(cornerRadius: 5)
-                        )
-                        .contentShape(Rectangle())
-                }
-                .buttonStyle(.plain)
-            }
-        }
-        .padding(3)
-        .background(Theme.panel, in: RoundedRectangle(cornerRadius: 7))
     }
 }
 
