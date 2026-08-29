@@ -27,12 +27,19 @@ struct DailyNotchApp: App {
 final class AppDelegate: NSObject, NSApplicationDelegate {
     let store = Store()
     lazy var focus = FocusTimer(store: store)
+    lazy var pomodoro = PomodoroEngine(store: store)
     private var notchController: NotchWindowController?
     private var tasksController: TasksWindowController?
     private var settingsController: SettingsWindowController?
     private var viewModel: NotchViewModel?
     private let hotkey = GlobalHotkey()
     private var focusCancellable: AnyCancellable?
+
+    /// Number of user-openable windows currently up. Drives the activation
+    /// policy: the app stays `.accessory` (menu-bar only) until the user
+    /// opens Tasks or Settings, at which point it becomes `.regular` so the
+    /// window gets a Dock icon and joins the Alt-Tab list.
+    private var userWindowCount = 0
 
     func applicationDidFinishLaunching(_ notification: Notification) {
         NSApp.setActivationPolicy(.accessory)   // no Dock icon; lives in the notch
@@ -72,15 +79,38 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
 
     func showTasksWindow() {
         if tasksController == nil {
-            tasksController = TasksWindowController(store: store, focus: focus)
+            let c = TasksWindowController(store: store, focus: focus, pomodoro: pomodoro)
+            c.onClose = { [weak self] in self?.userWindowDidClose() }
+            tasksController = c
+            bumpUserWindowCount()
         }
         tasksController?.show()
     }
 
     func showSettingsWindow() {
         if settingsController == nil {
-            settingsController = SettingsWindowController(store: store)
+            let c = SettingsWindowController(store: store)
+            c.onClose = { [weak self] in self?.userWindowDidClose() }
+            settingsController = c
+            bumpUserWindowCount()
         }
         settingsController?.show()
+    }
+
+    private func bumpUserWindowCount() {
+        userWindowCount += 1
+        if userWindowCount == 1 {
+            // First user window — promote to a regular app so the Dock icon
+            // appears and the window joins the Alt-Tab cycle.
+            NSApp.setActivationPolicy(.regular)
+        }
+    }
+
+    private func userWindowDidClose() {
+        userWindowCount = max(0, userWindowCount - 1)
+        if userWindowCount == 0 {
+            // All user windows closed — revert to menu-bar-only mode.
+            NSApp.setActivationPolicy(.accessory)
+        }
     }
 }
