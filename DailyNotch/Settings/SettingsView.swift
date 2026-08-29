@@ -26,6 +26,10 @@ struct SettingsView: View {
                 toggleRow("Play sound when a focus block ends",
                           isOn: $store.settings.playSound)
             }
+            section("APPEARANCE") {
+                toggleRow("Show progress timeline on the notch",
+                          isOn: $store.settings.showTimeline)
+            }
             section("STARTUP") {
                 toggleRow("Launch DailyNotch at login",
                           isOn: Binding(

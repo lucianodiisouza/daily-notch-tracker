@@ -46,6 +46,13 @@ final class NotchWindowController {
             .receive(on: RunLoop.main)
             .sink { [weak self] _ in self?.reposition(animated: true) }
             .store(in: &cancellables)
+        // Settings (e.g. toggling the timeline) change the collapsed height —
+        // re-fit the panel live. objectWillChange fires pre-mutation, so defer
+        // to the next runloop to read the updated targetSize.
+        viewModel.store.objectWillChange
+            .receive(on: RunLoop.main)
+            .sink { [weak self] _ in self?.reposition(animated: true) }
+            .store(in: &cancellables)
 
         // Re-dock when displays change (monitor plugged in, resolution change…).
         NotificationCenter.default

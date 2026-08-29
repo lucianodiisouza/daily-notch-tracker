@@ -37,12 +37,10 @@ struct CollapsedTimerView: View {
                             .font(.system(size: 12, weight: .medium))
                             .foregroundStyle(Theme.textSecondary)
                             .lineLimit(1)
-                        Image(systemName: "sparkles")
-                            .font(.system(size: 11))
-                            .foregroundStyle(Theme.accent)
                     }
                     .frame(maxWidth: .infinity, alignment: .leading)
                     .padding(.leading, 14)
+                    .padding(.trailing, 16)
                 }
                 .frame(maxWidth: .infinity)
                 .frame(height: vm.notchHeight)

@@ -6,6 +6,7 @@ import SwiftUI
 struct RootNotchView: View {
     @EnvironmentObject private var vm: NotchViewModel
     @EnvironmentObject private var focus: FocusTimer
+    @EnvironmentObject private var store: Store
 
     /// Bottom-corner radius: roomy when expanded, tight when collapsed (a large
     /// radius on the short pill would swallow the tray's side segments).
@@ -42,7 +43,9 @@ struct RootNotchView: View {
     private var trayLineWidth: CGFloat { 2.5 }
 
     @ViewBuilder private var trayOverlay: some View {
-        if vm.expanded || focus.isActive {
+        // Collapsed pill only draws the tray when the timeline is enabled; the
+        // expanded dashboard always keeps its accent border.
+        if vm.expanded || (focus.isActive && store.settings.showTimeline) {
             // Collapsed: hug tightly (small insets, low corner) so the short
             // side segments still read. Expanded: roomier inset.
             //

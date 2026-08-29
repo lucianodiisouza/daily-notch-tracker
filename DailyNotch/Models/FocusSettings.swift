@@ -10,6 +10,10 @@ struct FocusSettings: Codable, Equatable {
     var notificationsEnabled: Bool = true
     /// Whether to play the system beep at the end of a focus block.
     var playSound: Bool = true
+    /// Whether the collapsed counting pill draws the accent progress timeline.
+    /// When off, the pill sits flush at the exact hardware-notch height and
+    /// shows only the time + task name (no overhang, no progress line).
+    var showTimeline: Bool = true
 
     static let `default` = FocusSettings()
 

@@ -31,8 +31,10 @@ final class NotchViewModel: ObservableObject {
 
     var collapsedHeight: CGFloat {
         // Keep the dark overhang below the notch small; just enough room for the
-        // progress tray to show its bottom + short side segments.
-        focus.isActive ? notchHeight + 14 : notchHeight
+        // progress tray to show its bottom + short side segments. With the
+        // timeline disabled there's no tray to make room for, so the pill sits
+        // flush at the exact hardware-notch height.
+        focus.isActive && store.settings.showTimeline ? notchHeight + 14 : notchHeight
     }
 
     /// Fixed height: always exactly two visible to-do rows (the list scrolls if
