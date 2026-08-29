@@ -21,7 +21,22 @@ final class NotchWindowController {
             .environmentObject(viewModel.focus)
 
         panel = NotchPanel(contentRect: NSRect(x: 0, y: 0, width: 300, height: 40))
-        panel.contentView = NSHostingView(rootView: content)
+
+        // Opaque black backing with rounded BOTTOM corners. Because it's a real
+        // CALayer it resizes in lockstep with the window, so animating the frame
+        // never exposes a transparent gap (which showed the wallpaper).
+        let backing = NSView()
+        backing.wantsLayer = true
+        backing.layer?.backgroundColor = NSColor.black.cgColor
+        backing.layer?.cornerRadius = Theme.notchCorner
+        backing.layer?.maskedCorners = [.layerMinXMinYCorner, .layerMaxXMinYCorner]
+        backing.layer?.masksToBounds = true
+
+        let hosting = NSHostingView(rootView: content)
+        hosting.frame = backing.bounds
+        hosting.autoresizingMask = [.width, .height]
+        backing.addSubview(hosting)
+        panel.contentView = backing
 
         // Re-anchor whenever the target size changes.
         viewModel.$expanded
