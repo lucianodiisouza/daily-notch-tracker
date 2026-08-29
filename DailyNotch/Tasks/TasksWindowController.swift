@@ -30,11 +30,24 @@ final class TasksWindowController: NSObject, NSWindowDelegate {
             win.backgroundColor = NSColor.black
             win.contentView = NSHostingView(rootView: root)
             win.delegate = self
-            win.center()
             window = win
         }
+        centerOnActiveScreen()
         NSApp.activate(ignoringOtherApps: true)
         window?.makeKeyAndOrderFront(nil)
+    }
+
+    /// Center on the screen currently under the mouse, within its visibleFrame
+    /// (which excludes the menu bar / notch) so the window never opens under the notch.
+    private func centerOnActiveScreen() {
+        guard let win = window else { return }
+        let mouse = NSEvent.mouseLocation
+        let screen = NSScreen.screens.first { $0.frame.contains(mouse) }
+            ?? NSScreen.main ?? NSScreen.screens.first
+        guard let vf = screen?.visibleFrame else { return }
+        let size = win.frame.size
+        win.setFrameOrigin(NSPoint(x: vf.midX - size.width / 2,
+                                   y: vf.midY - size.height / 2))
     }
 
     func windowWillClose(_ notification: Notification) {
