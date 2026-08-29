@@ -33,13 +33,15 @@ struct TodoPanel: View {
     private let rowHeight = NotchViewModel.todoRowHeight
     private let rowGap: CGFloat = 8
 
-    /// Completed tasks drop out of the notch stack — only what's left to do.
-    private var todays: [Task] { store.tasks(on: Date()).filter { !$0.isDone } }
+    /// Today's tasks with done ones sorted to the bottom (Store.isBefore
+    /// handles that). We keep completed tasks visible so checking one off
+    /// doesn't make it vanish — it just sinks.
+    private var todays: [Task] { store.tasks(on: Date()) }
 
     var body: some View {
         VStack(alignment: .leading, spacing: 8) {
             HStack {
-                Label("To Do", systemImage: "checklist")
+                Text("To Do")
                     .font(.system(size: 13, weight: .semibold))
                     .foregroundStyle(Theme.textPrimary)
                 Spacer()
@@ -47,6 +49,8 @@ struct TodoPanel: View {
                     Image(systemName: "arrow.up.left.and.arrow.down.right")
                         .font(.system(size: 11, weight: .semibold))
                         .foregroundStyle(Theme.textSecondary)
+                        .frame(width: 22, height: 22)
+                        .contentShape(Rectangle())
                 }
                 .buttonStyle(.plain)
             }
@@ -64,8 +68,11 @@ struct TodoPanel: View {
                             onDragEnd: handleDragEnd
                         )
                         .offset(y: offsetForIndex(index))
+                        .opacity(draggingFrom != nil && draggingFrom != index ? 0.45 : 1.0)
                         .zIndex(draggingFrom == index ? 1 : 0)
-                        .animation(.easeOut(duration: 0.18), value: targetIndex())
+                        .animation(.spring(response: 0.28, dampingFraction: 0.85),
+                                   value: targetIndex())
+                        .animation(.easeOut(duration: 0.12), value: draggingFrom)
                     }
                 }
             }
@@ -112,8 +119,18 @@ struct TodoPanel: View {
         let total = todays.count
         guard total > 0 else { return 0 }
         let stride = rowHeight + rowGap
-        let rowsMoved = Int((dragOffset / stride).rounded())
-        return max(0, min(total - 1, from + rowsMoved))
+        // Center-based: the row whose center is closest to the dragged row's
+        // center wins. No half-stride rounding flicker — the target only
+        // flips when the dragged row's center actually crosses a neighbor's.
+        let draggedCenter = CGFloat(from) * stride + rowHeight / 2 + dragOffset
+        var best = from
+        var bestDist = CGFloat.greatestFiniteMagnitude
+        for i in 0..<total {
+            let center = CGFloat(i) * stride + rowHeight / 2
+            let d = abs(draggedCenter - center)
+            if d < bestDist { bestDist = d; best = i }
+        }
+        return best
     }
 
     /// Per-row vertical offset: dragged row tracks the cursor, the rows
@@ -160,6 +177,7 @@ private struct TodoRow: View {
                 Text(task.title)
                     .font(.system(size: 12, weight: .semibold))
                     .foregroundStyle(Theme.textPrimary)
+                    .strikethrough(task.isDone)
                     .lineLimit(1)
                 if !task.notes.isEmpty {
                     Text(task.notes)
@@ -175,14 +193,13 @@ private struct TodoRow: View {
             }
             Spacer(minLength: 6)
 
-            // Estimate pill — lets you eyeball the quick vs. heavy tasks at a glance.
-            HStack(spacing: 3) {
-                Image(systemName: "clock").font(.system(size: 9))
-                Text(task.estimateLabel).font(.system(size: 10, weight: .medium))
-            }
-            .foregroundStyle(Theme.textSecondary)
-            .padding(.horizontal, 7).padding(.vertical, 3)
-            .background(Color.white.opacity(0.06), in: Capsule())
+            // Inline time editor — tap to change the estimate without opening
+            // the full task form. Done tasks still show the chip dimmed.
+            FocusTimePicker(
+                minutes: estimateBinding,
+                range: FocusSettings.focusRange,
+                presets: [5, 10, 15, 25, 30, 45, 60, 90]
+            )
 
             Button {
                 if isRunningThis { focus.togglePause() } else { focus.start(task: task) }
@@ -199,9 +216,10 @@ private struct TodoRow: View {
 
             // Drag handle — six dots in a 2×3 grid. Only this corner is
             // draggable; the rest of the row keeps its tap-to-open behavior.
+            // minimumDistance: 3 keeps a stray click from flashing the row.
             DragHandle()
                 .gesture(
-                    DragGesture(minimumDistance: 0, coordinateSpace: .local)
+                    DragGesture(minimumDistance: 3, coordinateSpace: .local)
                         .onChanged { value in
                             if !isDragging { onDragStart() }
                             onDragChanged(value.translation.height)
@@ -211,6 +229,23 @@ private struct TodoRow: View {
         }
         .padding(.horizontal, 8)
         .frame(height: NotchViewModel.todoRowHeight)
-        .background(Theme.panel, in: RoundedRectangle(cornerRadius: Theme.panelCorner))
+        .background(isDragging ? Theme.panelHover : Theme.panel,
+                    in: RoundedRectangle(cornerRadius: Theme.panelCorner))
+        .scaleEffect(isDragging ? 1.03 : 1.0)
+        .opacity(task.isDone ? 0.5 : 1.0)
+        .animation(.easeOut(duration: 0.12), value: isDragging)
+        .animation(.easeOut(duration: 0.12), value: task.isDone)
+    }
+
+    /// Two-way binding into the store for the inline time picker.
+    private var estimateBinding: Binding<Int> {
+        Binding(
+            get: { task.estimateMinutes },
+            set: { newValue in
+                var updated = task
+                updated.estimateMinutes = newValue
+                store.update(updated)
+            }
+        )
     }
 }
