@@ -2,7 +2,8 @@ import SwiftUI
 
 /// Shared visual language, tuned to match the mockups (black pill, blue accent).
 enum Theme {
-    static let accent = Color(red: 0.15, green: 0.47, blue: 1.0)     // iOS-style blue
+    /// Follows the user's macOS accent color (System Settings › Appearance).
+    static let accent = Color(nsColor: .controlAccentColor)
     static let danger = Color(red: 0.95, green: 0.23, blue: 0.23)    // pause red
     static let pill = Color.black
     static let panel = Color(white: 0.10)
@@ -36,6 +37,35 @@ struct NotchShape: Shape {
                        control: CGPoint(x: rect.minX, y: rect.maxY))
         p.closeSubpath()
         _ = tr
+        return p
+    }
+}
+
+/// An open-top rounded frame inset from the pill edges — the accent "tray" that
+/// hugs the left, bottom, and right (never the top, which meets the screen edge),
+/// with visible padding between it and the black pill. Used as a static outline
+/// when expanded and as a progress track when a timer is running.
+struct NotchTrayShape: Shape {
+    var inset: CGFloat = 6
+    var topInset: CGFloat = 6
+    var corner: CGFloat = 16
+
+    func path(in rect: CGRect) -> Path {
+        var p = Path()
+        let r = min(corner, (rect.width - inset * 2) / 2)
+        let left = rect.minX + inset
+        let right = rect.maxX - inset
+        let bottom = rect.maxY - inset
+        let top = rect.minY + topInset
+
+        p.move(to: CGPoint(x: left, y: top))
+        p.addLine(to: CGPoint(x: left, y: bottom - r))
+        p.addQuadCurve(to: CGPoint(x: left + r, y: bottom),
+                       control: CGPoint(x: left, y: bottom))
+        p.addLine(to: CGPoint(x: right - r, y: bottom))
+        p.addQuadCurve(to: CGPoint(x: right, y: bottom - r),
+                       control: CGPoint(x: right, y: bottom))
+        p.addLine(to: CGPoint(x: right, y: top))
         return p
     }
 }
