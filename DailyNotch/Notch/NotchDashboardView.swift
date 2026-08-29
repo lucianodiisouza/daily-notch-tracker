@@ -46,13 +46,20 @@ struct TodoPanel: View {
             }
 
             // Exactly two rows tall; scrolls when there are more tasks.
-            ScrollView(.vertical, showsIndicators: false) {
-                VStack(spacing: 6) {
-                    ForEach(todays) { task in
-                        TodoRow(task: task)
-                    }
+            List {
+                ForEach(todays) { task in
+                    TodoRow(task: task)
+                        .listRowBackground(Color.clear)
+                        .listRowSeparator(.hidden)
+                        .listRowInsets(EdgeInsets(top: 0, leading: 0, bottom: 0, trailing: 0))
+                }
+                .onMove { source, destination in
+                    store.moveTasks(in: todays, from: source, to: destination)
                 }
             }
+            .listStyle(.plain)
+            .scrollContentBackground(.hidden)
+            .scrollDisabled(true)
             .frame(height: CGFloat(NotchViewModel.visibleTodoRows) * NotchViewModel.todoRowHeight
                    + CGFloat(NotchViewModel.visibleTodoRows - 1) * 6)
 
