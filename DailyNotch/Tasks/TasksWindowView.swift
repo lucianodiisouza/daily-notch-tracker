@@ -72,13 +72,9 @@ struct TasksWindowView: View {
 
             Divider().overlay(Color.white.opacity(0.08))
 
-            // ---- Right: Todo | Pomodoro (half-half) ----
+            // ---- Right: Todo | Pomodoro (50/50) ----
             VStack(alignment: .leading, spacing: 12) {
-                Picker("", selection: $mainTab) {
-                    ForEach(MainTab.allCases, id: \.self) { Text($0.rawValue).tag($0) }
-                }
-                .pickerStyle(.segmented)
-                .labelsHidden()
+                halfSplitTabs
 
                 switch mainTab {
                 case .todo:
@@ -107,6 +103,33 @@ struct TasksWindowView: View {
             calendar.refresh()
         }
         .onChange(of: store.pendingOpenTaskID) { _, _ in consumePendingOpen() }
+    }
+
+    /// Custom 50/50 segmented tabs. The default `.segmented` Picker sizes
+    /// each segment to its content (so "Pomodoro" hogs the row and "Todo"
+    /// gets a sliver) — this guarantees each tab gets exactly half.
+    private var halfSplitTabs: some View {
+        HStack(spacing: 3) {
+            ForEach(MainTab.allCases, id: \.self) { option in
+                Button {
+                    withAnimation(.easeOut(duration: 0.12)) { mainTab = option }
+                } label: {
+                    Text(option.rawValue)
+                        .font(.system(size: 12, weight: .semibold))
+                        .foregroundStyle(mainTab == option ? .white : Theme.textSecondary)
+                        .frame(maxWidth: .infinity)
+                        .padding(.vertical, 6)
+                        .background(
+                            mainTab == option ? Theme.accent : Color.clear,
+                            in: RoundedRectangle(cornerRadius: 6)
+                        )
+                        .contentShape(Rectangle())
+                }
+                .buttonStyle(.plain)
+            }
+        }
+        .padding(3)
+        .background(Theme.panel, in: RoundedRectangle(cornerRadius: 8))
     }
 
     /// The Todo half: inner Day/Unscheduled toggle, the drag-to-reorder list,
