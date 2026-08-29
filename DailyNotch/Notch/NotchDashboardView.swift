@@ -44,18 +44,24 @@ struct TodoPanel: View {
                 .buttonStyle(.plain)
             }
 
-            VStack(spacing: 6) {
-                ForEach(todays.prefix(3)) { task in
-                    TodoRow(task: task)
+            // Exactly two rows tall; scrolls when there are more tasks.
+            ScrollView(.vertical, showsIndicators: false) {
+                VStack(spacing: 6) {
+                    ForEach(todays) { task in
+                        TodoRow(task: task)
+                    }
                 }
             }
+            .frame(height: CGFloat(NotchViewModel.visibleTodoRows) * NotchViewModel.todoRowHeight
+                   + CGFloat(NotchViewModel.visibleTodoRows - 1) * 6)
 
             Button { vm.openTasksWindow() } label: {
                 Text("Add a task")
                     .font(.system(size: 12))
                     .foregroundStyle(Theme.textSecondary)
                     .frame(maxWidth: .infinity, alignment: .leading)
-                    .padding(.vertical, 4)
+                    .padding(.vertical, 6)
+                    .contentShape(Rectangle())
             }
             .buttonStyle(.plain)
         }
@@ -64,6 +70,7 @@ struct TodoPanel: View {
 
 private struct TodoRow: View {
     let task: Task
+    @EnvironmentObject private var vm: NotchViewModel
     @EnvironmentObject private var store: Store
     @EnvironmentObject private var focus: FocusTimer
 
@@ -106,7 +113,14 @@ private struct TodoRow: View {
             }
             .buttonStyle(.plain)
         }
-        .padding(8)
+        .padding(.horizontal, 8)
+        .frame(height: NotchViewModel.todoRowHeight)
         .background(Theme.panel, in: RoundedRectangle(cornerRadius: Theme.panelCorner))
+        // Tap anywhere else on the row to open the task's detail.
+        .contentShape(RoundedRectangle(cornerRadius: Theme.panelCorner))
+        .onTapGesture {
+            store.pendingOpenTaskID = task.id
+            vm.openTasksWindow()
+        }
     }
 }
