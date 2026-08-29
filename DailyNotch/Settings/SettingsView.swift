@@ -9,6 +9,7 @@ import SwiftUI
 struct SettingsView: View {
     @EnvironmentObject private var store: Store
     @Environment(\.dismiss) private var dismiss
+    @StateObject private var launchAtLogin = LaunchAtLoginController()
 
     var body: some View {
         VStack(alignment: .leading, spacing: 18) {
@@ -33,10 +34,17 @@ struct SettingsView: View {
                 toggleRow("Play sound when a focus block ends",
                           isOn: $store.settings.playSound)
             }
+            section("STARTUP") {
+                toggleRow("Launch DailyNotch at login",
+                          isOn: Binding(
+                            get: { launchAtLogin.isEnabled },
+                            set: { new in _Concurrency.Task { await launchAtLogin.setEnabled(new) } }
+                          ))
+            }
             Spacer(minLength: 0)
         }
         .padding(20)
-        .frame(width: 420, height: 360)
+        .frame(width: 420, height: 420)
         .background(Color.black)
         .preferredColorScheme(.dark)
     }
