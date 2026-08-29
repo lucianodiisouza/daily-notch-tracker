@@ -97,7 +97,7 @@ jobs:
       - name: Generate changelog
         id: changelog
         run: |
-          PREV_TAG=$(git tag --sort=-version:refname | grep -v "^v${{ steps.version.outputs.tag }}$" | head -1 || echo "")
+          PREV_TAG=$(git tag --sort=-version:refname | grep -v "^${{ steps.version.outputs.tag }}$" | head -1 || echo "")
           if [ -z "$PREV_TAG" ]; then
             # First tagged release: include every commit.
             BODY=$(/tmp/git-cliff-2.13.1/git-cliff --config cliff.toml --tag "${{ steps.version.outputs.tag }}")
