@@ -276,11 +276,21 @@ struct TasksWindowView: View {
                 .background(Theme.panel, in: RoundedRectangle(cornerRadius: 8))
                 .overlay(RoundedRectangle(cornerRadius: 8).stroke(Theme.accent, lineWidth: 1))
                 .onSubmit { commitDraft() }
+                .onChange(of: draftTitle) { _, new in
+                    if new.count > Task.titleLimit {
+                        draftTitle = String(new.prefix(Task.titleLimit))
+                    }
+                }
             HStack(spacing: 8) {
                 TextField("Notes (optional)", text: $draftNotes)
                     .textFieldStyle(.plain)
                     .padding(10)
                     .background(Theme.panel, in: RoundedRectangle(cornerRadius: 8))
+                    .onChange(of: draftNotes) { _, new in
+                        if new.count > Task.notesLimit {
+                            draftNotes = String(new.prefix(Task.notesLimit))
+                        }
+                    }
                 Button("Add") { commitDraft() }
                     .buttonStyle(.plain)
                     .font(.system(size: 13, weight: .semibold))
@@ -296,10 +306,21 @@ struct TasksWindowView: View {
                     .background(Theme.panel, in: RoundedRectangle(cornerRadius: 8))
                     .contentShape(Rectangle())
             }
+            HStack(spacing: 10) {
+                Spacer()
+                counter("Title", draftTitle.count, Task.titleLimit)
+                counter("Notes", draftNotes.count, Task.notesLimit)
+            }
         }
         // Focus the title field as soon as the form is in the hierarchy so
         // the user can start typing immediately after tapping "Add a task".
         .onAppear { titleFocused = true }
+    }
+
+    private func counter(_ label: String, _ count: Int, _ limit: Int) -> some View {
+        Text("\(label) \(count)/\(limit)")
+            .font(.system(size: 10, weight: .medium).monospacedDigit())
+            .foregroundStyle(count >= limit ? Theme.accent : Theme.textSecondary)
     }
 
     private func commitDraft() {

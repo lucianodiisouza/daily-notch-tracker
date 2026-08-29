@@ -28,15 +28,25 @@ struct TaskDetailView: View {
                 .buttonStyle(.plain)
             }
 
-            field("Title") {
+            field("Title", count: draft.title.count, limit: Task.titleLimit) {
                 TextField("Task title", text: $draft.title)
                     .textFieldStyle(.plain)
+                    .onChange(of: draft.title) { _, new in
+                        if new.count > Task.titleLimit {
+                            draft.title = String(new.prefix(Task.titleLimit))
+                        }
+                    }
             }
 
-            field("Notes") {
+            field("Notes", count: draft.notes.count, limit: Task.notesLimit) {
                 TextField("Notes (optional)", text: $draft.notes, axis: .vertical)
                     .textFieldStyle(.plain)
                     .lineLimit(2...5)
+                    .onChange(of: draft.notes) { _, new in
+                        if new.count > Task.notesLimit {
+                            draft.notes = String(new.prefix(Task.notesLimit))
+                        }
+                    }
             }
 
             HStack(alignment: .top, spacing: 12) {
@@ -106,11 +116,21 @@ struct TaskDetailView: View {
     }
 
     private func field<Content: View>(_ label: String,
+                                      count: Int? = nil,
+                                      limit: Int? = nil,
                                       @ViewBuilder _ content: () -> Content) -> some View {
         VStack(alignment: .leading, spacing: 6) {
-            Text(label.uppercased())
-                .font(.system(size: 10, weight: .semibold))
-                .foregroundStyle(Theme.textSecondary)
+            HStack {
+                Text(label.uppercased())
+                    .font(.system(size: 10, weight: .semibold))
+                    .foregroundStyle(Theme.textSecondary)
+                Spacer()
+                if let count, let limit {
+                    Text("\(count)/\(limit)")
+                        .font(.system(size: 10, weight: .medium).monospacedDigit())
+                        .foregroundStyle(count >= limit ? Theme.accent : Theme.textSecondary)
+                }
+            }
             content()
                 .padding(10)
                 .frame(maxWidth: .infinity, alignment: .leading)

@@ -2,6 +2,10 @@ import Foundation
 
 /// A single to-do / focus task.
 struct Task: Identifiable, Codable, Hashable {
+    /// Max characters accepted in the title / notes fields.
+    static let titleLimit = 150
+    static let notesLimit = 500
+
     var id: UUID = UUID()
     var title: String
     var notes: String = ""
