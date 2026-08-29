@@ -10,10 +10,31 @@ final class CalendarAuthModel: ObservableObject {
     @Published var events: [EKEvent] = []
 
     /// The day whose events are currently loaded. Kept so `requestAccess()`
-    /// can refresh the same day the view is showing after a grant.
+    /// and the live-change observer can refresh the same day the view is
+    /// showing.
     private var loadedDate = Date()
 
-    init() { refresh(for: loadedDate) }
+    /// Token for the `.EKEventStoreChanged` observer, removed on deinit.
+    private var changeObserver: NSObjectProtocol?
+
+    init() {
+        refresh(for: loadedDate)
+        // EventKit posts this (possibly off the main thread) whenever any
+        // calendar data changes — an event added, edited, or deleted, here or
+        // in another app. Reload the day we're showing so the feed stays live.
+        changeObserver = NotificationCenter.default.addObserver(
+            forName: .EKEventStoreChanged, object: nil, queue: nil
+        ) { [weak self] _ in
+            _Concurrency.Task { @MainActor in
+                guard let self else { return }
+                self.refresh(for: self.loadedDate)
+            }
+        }
+    }
+
+    deinit {
+        if let changeObserver { NotificationCenter.default.removeObserver(changeObserver) }
+    }
 
     /// Re-read the current auth state and (if authorized) the events for `date`.
     func refresh(for date: Date) {
