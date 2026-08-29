@@ -203,7 +203,7 @@ private struct TodoRow: View {
                 .gesture(
                     DragGesture(minimumDistance: 0, coordinateSpace: .local)
                         .onChanged { value in
-                            if !isDragging { onDragStart(index) }
+                            if !isDragging { onDragStart() }
                             onDragChanged(value.translation.height)
                         }
                         .onEnded { _ in onDragEnd() }
