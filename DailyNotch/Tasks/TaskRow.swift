@@ -67,9 +67,12 @@ struct TaskRow: View {
 
             // Drag handle — six dots in a 2×3 grid. Only this corner drags;
             // minimumDistance: 3 keeps a stray click from flashing the row.
+            // Measure in .global: the row is moved by `.offset(y:)` during the
+            // drag, so a .local space would shift under the gesture and feed
+            // the translation back into itself (half-speed, jittery tracking).
             DragHandle()
                 .gesture(
-                    DragGesture(minimumDistance: 3, coordinateSpace: .local)
+                    DragGesture(minimumDistance: 3, coordinateSpace: .global)
                         .onChanged { value in
                             if !isDragging { onDragStart() }
                             onDragChanged(value.translation.height)
@@ -77,7 +80,10 @@ struct TaskRow: View {
                         .onEnded { _ in onDragEnd() }
                 )
         }
-        .padding(10)
+        .padding(.horizontal, 10)
+        // Fixed height so the reorder stride math (rowHeight + gap) is exact,
+        // regardless of whether a row shows a notes line.
+        .frame(height: 60)
         .background(isDragging ? Theme.panelHover : Theme.panel,
                     in: RoundedRectangle(cornerRadius: 12))
         .scaleEffect(isDragging ? 1.02 : 1.0)
@@ -123,11 +129,9 @@ struct TaskRow: View {
 }
 
 /// Six dots in a 2×3 grid. Used as the drag handle in both the notch and
-/// the Tasks window. Hover state lifts opacity and adds a soft background
-/// so users can tell it's grabbable before they commit to a drag.
+/// the Tasks window. The grip shape reads as grabbable on its own, so it
+/// carries no hover or background chrome.
 struct DragHandle: View {
-    @State private var isHovered = false
-
     var body: some View {
         VStack(spacing: 3) {
             HStack(spacing: 3) { dot; dot }
@@ -135,18 +139,13 @@ struct DragHandle: View {
             HStack(spacing: 3) { dot; dot }
         }
         .frame(width: 22, height: 22)
-        .background(
-            RoundedRectangle(cornerRadius: 5)
-                .fill(Color.white.opacity(isHovered ? 0.10 : 0.04))
-        )
         .contentShape(Rectangle())
-        .onHover { isHovered = $0 }
         .help("Drag to reorder")
     }
 
     private var dot: some View {
         Circle()
-            .fill(Theme.textSecondary.opacity(isHovered ? 0.9 : 0.55))
+            .fill(Theme.textSecondary.opacity(0.55))
             .frame(width: 3.5, height: 3.5)
     }
 }

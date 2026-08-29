@@ -328,7 +328,11 @@ struct TasksWindowView: View {
         if let from = draggingFrom {
             let to = targetIndex()
             if to != from {
-                store.moveTasks(in: listedTasks, from: IndexSet(integer: from), to: to)
+                // `move(toOffset:)` inserts *before* the given offset, so a
+                // downward move needs +1 to actually land past its new
+                // neighbor (otherwise it stops one slot short of the bottom).
+                let dest = to > from ? to + 1 : to
+                store.moveTasks(in: listedTasks, from: IndexSet(integer: from), to: dest)
             }
         }
         draggingFrom = nil

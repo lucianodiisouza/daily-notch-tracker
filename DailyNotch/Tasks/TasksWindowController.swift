@@ -32,7 +32,9 @@ final class TasksWindowController: NSObject, NSWindowDelegate {
             win.title = "Tasks"
             win.titlebarAppearsTransparent = true
             win.titleVisibility = .hidden
-            win.isMovableByWindowBackground = true
+            // Only the top titlebar strip moves the window. Background dragging
+            // would compete with the drag-to-reorder gesture on the task rows.
+            win.isMovableByWindowBackground = false
             win.backgroundColor = NSColor.black
             win.contentView = NSHostingView(rootView: root)
             win.delegate = self

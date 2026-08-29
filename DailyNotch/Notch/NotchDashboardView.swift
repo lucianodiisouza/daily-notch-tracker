@@ -107,7 +107,11 @@ struct TodoPanel: View {
         if let from = draggingFrom {
             let to = targetIndex()
             if to != from {
-                store.moveTasks(in: todays, from: IndexSet(integer: from), to: to)
+                // `move(toOffset:)` inserts *before* the given offset, so a
+                // downward move needs +1 to actually land past its new
+                // neighbor (otherwise it stops one slot short of the bottom).
+                let dest = to > from ? to + 1 : to
+                store.moveTasks(in: todays, from: IndexSet(integer: from), to: dest)
             }
         }
         draggingFrom = nil
@@ -220,9 +224,11 @@ private struct TodoRow: View {
             // Drag handle — six dots in a 2×3 grid. Only this corner is
             // draggable; the rest of the row keeps its tap-to-open behavior.
             // minimumDistance: 3 keeps a stray click from flashing the row.
+            // .global space: the row is moved by `.offset(y:)` mid-drag, so a
+            // .local space would feed the translation back into itself.
             DragHandle()
                 .gesture(
-                    DragGesture(minimumDistance: 3, coordinateSpace: .local)
+                    DragGesture(minimumDistance: 3, coordinateSpace: .global)
                         .onChanged { value in
                             if !isDragging { onDragStart() }
                             onDragChanged(value.translation.height)
