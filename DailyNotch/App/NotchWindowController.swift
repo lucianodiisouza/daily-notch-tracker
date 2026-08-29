@@ -12,7 +12,7 @@ final class NotchWindowController {
     private var cancellables = Set<AnyCancellable>()
 
     @MainActor
-    init(viewModel: NotchViewModel) {
+    init(viewModel: NotchViewModel, pomodoro: PomodoroEngine) {
         self.viewModel = viewModel
 
         let content = AnyView(
@@ -20,6 +20,7 @@ final class NotchWindowController {
                 .environmentObject(viewModel)
                 .environmentObject(viewModel.store)
                 .environmentObject(viewModel.focus)
+                .environmentObject(pomodoro)
         )
 
         panel = NotchPanel(contentRect: NSRect(x: 0, y: 0, width: 300, height: 40))

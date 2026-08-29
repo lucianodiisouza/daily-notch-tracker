@@ -74,7 +74,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         let vm = NotchViewModel(store: store, focus: focus, metrics: .primary)
         vm.openTasksWindow = { [weak self] in self?.showTasksWindow() }
         viewModel = vm
-        notchController = NotchWindowController(viewModel: vm)
+        notchController = NotchWindowController(viewModel: vm, pomodoro: pomodoro)
     }
 
     func showTasksWindow() {
