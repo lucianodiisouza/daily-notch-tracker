@@ -84,24 +84,24 @@ final class Store: ObservableObject {
 
     // MARK: - Queries
 
-    /// Sort key: undone first, then by user-controlled `sortOrder`, then by
-    /// `createdAt` as a stable tiebreaker. The `isDone` flag is bool-
-    /// comparable (false < true), so checked items naturally sink to the
-    /// bottom of the list.
-    private func sortKey(_ t: Task) -> (Bool, Double, Date) {
-        (t.isDone, t.sortOrder, t.createdAt)
+    /// Order undone before done, then by user-controlled `sortOrder`, then by
+    /// `createdAt` as a stable tiebreaker. Tuple comparison isn't available
+    /// for `(Bool, Double, Date)` so we spell the comparator out.
+    private func isBefore(_ a: Task, _ b: Task) -> Bool {
+        if a.isDone != b.isDone { return !a.isDone }
+        if a.sortOrder != b.sortOrder { return a.sortOrder < b.sortOrder }
+        return a.createdAt < b.createdAt
     }
 
     func tasks(on day: Date) -> [Task] {
         let cal = Calendar.current
         return tasks
             .filter { $0.scheduledDate.map { cal.isDate($0, inSameDayAs: day) } ?? false }
-            .sorted { sortKey($0) < sortKey($1) }
+            .sorted(isBefore)
     }
 
     var unscheduled: [Task] {
-        tasks.filter { $0.scheduledDate == nil }
-            .sorted { sortKey($0) < sortKey($1) }
+        tasks.filter { $0.scheduledDate == nil }.sorted(isBefore)
     }
 
     /// Days (normalized to start-of-day) that have at least one focus session.
