@@ -82,11 +82,22 @@ final class FocusTimer: ObservableObject {
     private func complete() {
         let taskTitle = activeTask?.title
         finishSession(completed: true)
-        if store.settings.playSound { NSSound.beep() }
+        if store.settings.playSound { playCompletionSound() }
         if store.settings.notificationsEnabled {
             NotificationService.shared.postFocusComplete(taskTitle: taskTitle)
         }
         reset()
+    }
+
+    /// A soft chime for a completed focus block. Prefers the built-in macOS
+    /// "Glass" sound (a warm two-note ding) over the harsh system beep, and
+    /// falls back to the beep if that named sound isn't available.
+    private func playCompletionSound() {
+        if let sound = NSSound(named: "Glass") {
+            sound.play()
+        } else {
+            NSSound.beep()
+        }
     }
 
     /// Stop the current block. `record` persists a session if one was in flight.
