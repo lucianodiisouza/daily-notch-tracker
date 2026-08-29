@@ -7,6 +7,7 @@ import SwiftUI
 final class Store: ObservableObject {
     @Published var tasks: [Task] = []
     @Published var sessions: [FocusSession] = []
+    @Published var settings: FocusSettings = .default
 
     /// Routing bus: set to a task id to request the Tasks window open its detail.
     @Published var pendingOpenTaskID: UUID?
@@ -129,10 +130,14 @@ final class Store: ObservableObject {
 
     // MARK: - Persistence
 
-    private struct Payload: Codable { var tasks: [Task]; var sessions: [FocusSession] }
+    private struct Payload: Codable {
+        var tasks: [Task]
+        var sessions: [FocusSession]
+        var settings: FocusSettings?
+    }
 
     func save() {
-        let payload = Payload(tasks: tasks, sessions: sessions)
+        let payload = Payload(tasks: tasks, sessions: sessions, settings: settings)
         guard let data = try? JSONEncoder().encode(payload) else { return }
         try? data.write(to: fileURL, options: .atomic)
     }
@@ -142,6 +147,7 @@ final class Store: ObservableObject {
               let payload = try? JSONDecoder().decode(Payload.self, from: data) else { return }
         tasks = payload.tasks
         sessions = payload.sessions
+        settings = payload.settings ?? .default
         // One-shot migration: any task with sortOrder == 0 came from a pre-reorder
         // data file. Give each one a stable value in the persisted order so the
         // first display matches what the user had, and reorders start working.
