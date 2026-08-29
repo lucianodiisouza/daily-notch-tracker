@@ -37,16 +37,18 @@ struct RootNotchView: View {
 
     @ViewBuilder private var trayOverlay: some View {
         if vm.expanded || focus.isActive {
-            let shape = NotchTrayShape(inset: 7, topInset: 7,
-                                       corner: vm.expanded ? 20 : 14)
+            let shape = NotchTrayShape(inset: 7,
+                                       topInset: vm.expanded ? 7 : 8,
+                                       corner: vm.expanded ? 20 : 13)
             let style = StrokeStyle(lineWidth: trayLineWidth, lineCap: .round)
             ZStack {
                 // Full track, both sides + bottom, always visible.
-                shape.stroke(Theme.accent.opacity(0.35), style: style)
-                // Bright progress fill (0 when no timer is running).
+                shape.stroke(Theme.accent.opacity(0.45), style: style)
+                // Bright progress fill (0 when no timer is running). Animate over
+                // a full second so it flows continuously instead of ticking.
                 shape.trim(from: 0, to: focus.isActive ? focus.progress : 0)
                     .stroke(Theme.accent, style: style)
-                    .animation(.linear(duration: 0.3), value: focus.progress)
+                    .animation(.linear(duration: 1.0), value: focus.progress)
             }
         }
     }
