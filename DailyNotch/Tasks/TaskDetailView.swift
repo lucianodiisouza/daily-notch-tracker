@@ -37,13 +37,15 @@ struct TaskDetailView: View {
             }
 
             HStack(alignment: .top, spacing: 12) {
-                // Focus-time editor.
+                // Focus-time editor: refined popover picker (clock icon +
+                // current value, tap to open a macOS-Clock-style popover
+                // with +/- and preset chips).
                 field("Focus time") {
-                    Stepper(value: $draft.estimateMinutes, in: 5...180, step: 5) {
-                        Text("\(draft.estimateMinutes) min")
-                            .font(.system(size: 13))
-                            .foregroundStyle(Theme.textPrimary)
-                    }
+                    FocusTimePicker(
+                        minutes: $draft.estimateMinutes,
+                        range: FocusSettings.focusRange,
+                        presets: [5, 10, 15, 25, 30, 45, 60, 90]
+                    )
                 }
                 field("Date") {
                     DatePicker("", selection: Binding(
