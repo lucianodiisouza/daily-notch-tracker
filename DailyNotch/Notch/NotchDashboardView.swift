@@ -59,7 +59,6 @@ struct TodoPanel: View {
             }
             .listStyle(.plain)
             .scrollContentBackground(.hidden)
-            .scrollDisabled(true)
             .frame(height: CGFloat(NotchViewModel.visibleTodoRows) * NotchViewModel.todoRowHeight
                    + CGFloat(NotchViewModel.visibleTodoRows - 1) * 6)
 
