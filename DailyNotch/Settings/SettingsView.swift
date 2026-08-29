@@ -15,17 +15,17 @@ struct SettingsView: View {
         VStack(alignment: .leading, spacing: 18) {
             header
             section("TIMER") {
-                FocusTimePicker(
-                    minutes: $store.settings.focusMinutes,
-                    range: FocusSettings.focusRange,
-                    presets: [5, 10, 15, 25, 30, 45, 60, 90]
-                )
+                timerRow("Focus", minutes: $store.settings.focusMinutes,
+                         range: FocusSettings.focusRange,
+                         presets: [15, 25, 30, 45, 60, 90])
                 divider
-                FocusTimePicker(
-                    minutes: $store.settings.breakMinutes,
-                    range: FocusSettings.breakRange,
-                    presets: [1, 5, 10, 15, 30]
-                )
+                timerRow("Short break", minutes: $store.settings.breakMinutes,
+                         range: FocusSettings.breakRange,
+                         presets: [1, 5, 10, 15, 30])
+                divider
+                timerRow("Long break", minutes: $store.settings.longBreakMinutes,
+                         range: FocusSettings.longBreakRange,
+                         presets: [10, 15, 20, 30, 45])
             }
             section("ALERTS") {
                 toggleRow("Notification when a focus block ends",
@@ -44,7 +44,7 @@ struct SettingsView: View {
             Spacer(minLength: 0)
         }
         .padding(20)
-        .frame(width: 420, height: 420)
+        .frame(width: 420)
         .background(Color.black)
         .preferredColorScheme(.dark)
     }
@@ -61,6 +61,8 @@ struct SettingsView: View {
                 Image(systemName: "xmark")
                     .font(.system(size: 12, weight: .semibold))
                     .foregroundStyle(Theme.textSecondary)
+                    .frame(width: 22, height: 22)
+                    .contentShape(Rectangle())
             }
             .buttonStyle(.plain)
             .keyboardShortcut(.cancelAction)
@@ -96,6 +98,20 @@ struct SettingsView: View {
             Toggle("", isOn: isOn)
                 .labelsHidden()
                 .toggleStyle(.switch)
+        }
+    }
+
+    private func timerRow(_ label: String, minutes: Binding<Int>,
+                          range: ClosedRange<Int>, presets: [Int]) -> some View {
+        HStack {
+            Text(label)
+                .font(.system(size: 13))
+                .foregroundStyle(Theme.textPrimary)
+            Spacer()
+            FocusTimePicker(
+                minutes: minutes, range: range, presets: presets
+            )
+            .frame(width: 130)
         }
     }
 }
