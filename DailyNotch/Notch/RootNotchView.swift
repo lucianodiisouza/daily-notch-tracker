@@ -14,14 +14,21 @@ struct RootNotchView: View {
 
     var body: some View {
         ZStack(alignment: .top) {
-            NotchShape(bottomRadius: pillCorner).fill(Color.black)
-            content
+            // Clip ONLY the black pill + content to the notch shape. The accent
+            // tray is drawn on top, OUTSIDE the clip: it's fully inset within the
+            // pill, so it never needs clipping — and running it through the clip
+            // is exactly what shaved its rounded bottom corners flat (the "cut
+            // border"), no matter how the corner radius was tuned.
+            ZStack(alignment: .top) {
+                NotchShape(bottomRadius: pillCorner).fill(Color.black)
+                content
+            }
+            .clipShape(NotchShape(bottomRadius: pillCorner))
             trayOverlay
         }
         // Fill whatever size the NSWindow animates to — the window owns the
         // frame animation; the view must NOT animate its own size too.
         .frame(maxWidth: .infinity, maxHeight: .infinity)
-        .clipShape(NotchShape(bottomRadius: pillCorner))
         .contentShape(Rectangle())
         .onHover { hovering in vm.hover(hovering) }
     }
@@ -49,17 +56,11 @@ struct RootNotchView: View {
             // Collapsed: hug tightly (small insets, low corner) so the short
             // side segments still read. Expanded: roomier inset.
             //
-            // The tray's bottom corner radius must stay <= pillCorner - inset, or
-            // its rounded corners bulge past the pill's rounded bottom and get
-            // clipped flat — reading as a "cut" border (most obvious when idle,
-            // with no bright progress fill drawn over it).
+            // The tray is no longer clipped, so its corner just needs to sit
+            // concentric inside the pill's rounded bottom: radius = pillCorner
+            // minus the inset keeps a constant gap between the two curves.
             let inset: CGFloat = vm.expanded ? 7 : 6
-            // Keep the tray corner strictly INSIDE the pill's clip: subtract the
-            // stroke's outward reach (half the line width) plus a hairline, so
-            // the rounded corner never touches the clip edge and gets shaved
-            // flat. `pillCorner - inset` alone sits exactly on the boundary and
-            // clips intermittently as the window lands on different subpixels.
-            let corner = max(4, pillCorner - inset - trayLineWidth)
+            let corner = max(4, pillCorner - inset)
             let shape = NotchTrayShape(inset: inset,
                                        topInset: vm.expanded ? 7 : 5,
                                        corner: corner)
