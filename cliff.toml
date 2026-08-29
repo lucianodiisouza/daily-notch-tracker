@@ -1,0 +1,40 @@
+# git-cliff config for DailyNotch.
+# Docs: https://git-cliff.org/docs/configuration
+
+[changelog]
+header = """
+# Changelog
+
+All notable changes to this project will be documented in this file.
+
+The format is based on [Conventional Commits](https://www.conventionalcommits.org/),
+and this project adheres to [Semantic Versioning](https://semver.org/).\n
+"""
+trim = true
+postprocessors = []
+
+[git]
+conventional_commits = true
+filter_unconventional = true
+split_commits = false
+protect_breaking_commits = false
+filter_commits = false
+topo_order = false
+sort_commits = "oldest"
+
+[commit_types]
+feat = { name = "Features", priority = 0 }
+fix = { name = "Bug Fixes", priority = 1 }
+refactor = { name = "Refactors", priority = 2 }
+perf = { name = "Performance", priority = 3 }
+docs = { name = "Documentation", priority = 4 }
+polish = { name = "Polish", priority = 5 }
+chore = { name = "Chores", priority = 6 }
+ci = { name = "CI", priority = 7 }
+test = { name = "Tests", priority = 8 }
+style = { name = "Styling", priority = 9 }
+build = { name = "Build System", priority = 10 }
+
+[changelog.git]
+topo_order = false
+sort_commits = "oldest"

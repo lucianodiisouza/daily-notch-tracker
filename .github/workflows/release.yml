@@ -87,6 +87,31 @@ jobs:
           ls -la "${OUT}"
           echo "dmg=${OUT}" >> "$GITHUB_OUTPUT"
 
+      - name: Install git-cliff
+        run: |
+          # Latest stable; pinned URL so a surprise release can't break the build.
+          curl -sL https://github.com/orhun/git-cliff/releases/download/v2.13.1/git-cliff-2.13.1-aarch64-apple-darwin.tar.gz \
+            | tar xz -C /tmp
+          /tmp/git-cliff-2.13.1/git-cliff --version
+
+      - name: Generate changelog
+        id: changelog
+        run: |
+          PREV_TAG=$(git tag --sort=-version:refname | grep -v "^v${{ steps.version.outputs.tag }}$" | head -1 || echo "")
+          if [ -z "$PREV_TAG" ]; then
+            # First tagged release: include every commit.
+            BODY=$(/tmp/git-cliff-2.13.1/git-cliff --config cliff.toml --tag "${{ steps.version.outputs.tag }}")
+          else
+            BODY=$(/tmp/git-cliff-2.13.1/git-cliff --config cliff.toml --tag "${{ steps.version.outputs.tag }}" "${PREV_TAG}..HEAD")
+          fi
+          {
+            echo "body<<EOF"
+            echo "$BODY"
+            echo "EOF"
+          } >> "$GITHUB_OUTPUT"
+          echo "Generated changelog:"
+          echo "$BODY"
+
       - name: Notarize (when App Store Connect API key is configured)
         if: ${{ env.AC_API_KEY_ID != '' && env.AC_API_KEY_ISSUER_ID != '' && env.AC_API_KEY_P8 != '' }}
         env:
@@ -112,7 +137,7 @@ jobs:
         with:
           tag_name: ${{ steps.version.outputs.tag }}
           name: "DailyNotch ${{ steps.version.outputs.version }}"
-          generate_release_notes: true
+          body: ${{ steps.changelog.outputs.body }}
           draft: false
           prerelease: ${{ contains(steps.version.outputs.version, '-') }}
           files: ${{ steps.create_dmg.outputs.dmg }}
