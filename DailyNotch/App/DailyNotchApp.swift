@@ -10,7 +10,7 @@ struct DailyNotchApp: App {
     @ObservedObject private var updateChecker = UpdateChecker.shared
 
     var body: some Scene {
-        MenuBarExtra("DailyNotch", systemImage: "hourglass.circle") {
+        MenuBarExtra {
             Button("Open Tasks…") { appDelegate.showTasksWindow() }
                 .keyboardShortcut("t")
             Button(focusMenu.isFocusing ? "Stop focus" : "Start focus") {
@@ -29,6 +29,11 @@ struct DailyNotchApp: App {
             Divider()
             Button("Quit DailyNotch") { NSApp.terminate(nil) }
                 .keyboardShortcut("q")
+        } label: {
+            // Bare hourglass (no enclosing circle), sized up a touch so it
+            // matches the visual weight of the neighbouring menu-bar icons.
+            Image(systemName: "hourglass")
+                .font(.system(size: 16, weight: .regular))
         }
     }
 }

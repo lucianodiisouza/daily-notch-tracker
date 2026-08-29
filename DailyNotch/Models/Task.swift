@@ -11,7 +11,7 @@ struct Task: Identifiable, Codable, Hashable {
     var notes: String = ""
     /// The calendar day this task is scheduled for. `nil` == unscheduled.
     var scheduledDate: Date?
-    /// Planned focus duration in minutes (the Pomodoro estimate, e.g. 25).
+    /// Planned focus duration in minutes (the focus estimate, e.g. 25).
     var estimateMinutes: Int = 25
     var isDone: Bool = false
     var createdAt: Date = Date()

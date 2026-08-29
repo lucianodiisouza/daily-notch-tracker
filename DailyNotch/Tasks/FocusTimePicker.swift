@@ -98,7 +98,7 @@ struct FocusTimePicker: View {
 
     private func adjust(_ delta: Int) {
         // Fine-grained 1-min steps so the user can land on any value; presets
-        // cover the common Pomodoro durations without forcing a 5-min grid.
+        // cover the common focus durations without forcing a 5-min grid.
         let raw = minutes + delta
         minutes = max(range.lowerBound, min(range.upperBound, raw))
     }

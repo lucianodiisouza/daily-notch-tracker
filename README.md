@@ -2,7 +2,7 @@
 
 An open-source macOS notch app that turns the space around your MacBook's
 notch into a focus + task tracker. Hover the notch to reveal your to-do list
-and your activity streak. Start a task to run a Pomodoro timer that lives
+and your activity streak. Start a task to run a focus timer that lives
 right in the notch.
 
 Built with native SwiftUI + AppKit. macOS 14+.
@@ -18,7 +18,7 @@ Built with native SwiftUI + AppKit. macOS 14+.
 - Tasks window - month calendar, Day / Unscheduled toggle with drag-to-reorder,
   due chips, time estimates, an inline add form, and a refined focus time
   picker (popover with +/- and preset chips).
-- Pomodoro engine - per-task estimates drive the timer. Custom focus and
+- Focus engine - per-task estimates drive the timer. Custom focus and
   break lengths. Completed blocks feed the streak.
 - Settings - focus and break durations, notification + sound toggles,
   launch at login. Open from the gear in the Tasks window header.
@@ -107,7 +107,7 @@ just when DailyNotch is focused.
 DailyNotch/
 +- App/           NSApplication wiring, borderless notch panel, view model, focus menu state
 +- Models/        Task, FocusSession, FocusSettings, Store (JSON persistence)
-+- Focus/         FocusTimer (Pomodoro engine), GlobalHotkey, NotificationService
++- Focus/         FocusTimer (focus engine), GlobalHotkey, NotificationService
 +- Notch/         Collapsed pill + expanded dashboard (to-do + activity heatmap)
 +- Tasks/         Tasks window (calendar + list + add form), TaskRow, FocusTimePicker
 +- Settings/      Settings window + view + LaunchAtLoginController

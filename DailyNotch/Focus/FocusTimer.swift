@@ -1,7 +1,7 @@
 import Foundation
 import SwiftUI
 
-/// Pomodoro-style focus engine. Drives the collapsed-pill countdown + progress bar.
+/// Focus timer engine. Drives the collapsed-pill countdown + progress bar.
 @MainActor
 final class FocusTimer: ObservableObject {
     enum State: Equatable { case idle, running, paused }

@@ -44,7 +44,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 
 - *(models)* Add Task and FocusSession models
 - *(models)* Add Store with JSON persistence and streak logic
-- *(focus)* Add Pomodoro FocusTimer engine
+- *(focus)* Add FocusTimer engine
 - *(design)* Add Theme tokens and rounded-bottom NotchShape
 - *(app)* Add NotchMetrics for reading hardware notch geometry
 - *(app)* Add NotchViewModel with debounced hover expand/collapse
