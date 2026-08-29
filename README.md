@@ -37,6 +37,18 @@ xcodebuild -project DailyNotch.xcodeproj -scheme DailyNotch -configuration Relea
 The app runs as a menu-bar / notch agent — look for the hourglass in the menu
 bar, and hover your notch to open the dashboard.
 
+### Scripts
+
+```bash
+./scripts/run.sh            # build (Debug) and (re)launch
+./scripts/run.sh release    # build Release and launch
+./scripts/wipe.sh           # completely remove the app, data, and prefs from this Mac
+./scripts/wipe.sh -y        # …without the confirmation prompt
+```
+
+`wipe.sh` removes the built app, `~/Library/Application Support/DailyNotch`,
+preferences, caches, and any installed copy — it does **not** touch this repo.
+
 ## Architecture
 
 ```
