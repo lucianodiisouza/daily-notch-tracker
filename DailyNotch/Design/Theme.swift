@@ -12,6 +12,12 @@ enum Theme {
     static let textSecondary = Color(white: 0.62)
     static let streakEmpty = Color(white: 0.14)
 
+    // Pomodoro phase colors — intentionally distinct from `accent` (the
+    // per-task focus timer's color) so the two timers never read the same.
+    static let pomodoroWork      = Color(red: 0.95, green: 0.55, blue: 0.20)  // warm orange
+    static let pomodoroShortBreak = Color(red: 0.32, green: 0.78, blue: 0.48) // green
+    static let pomodoroLongBreak  = Color(red: 0.32, green: 0.62, blue: 0.92) // sky blue
+
     static let notchCorner: CGFloat = 22
     static let panelCorner: CGFloat = 14
 }
