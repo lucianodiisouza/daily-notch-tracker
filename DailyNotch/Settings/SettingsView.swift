@@ -1,4 +1,5 @@
 import SwiftUI
+import AppKit
 
 /// Editable view of `FocusSettings`. Two-way bindings write back to the store
 /// on every change, so the next focus block picks up the new durations.
@@ -10,6 +11,10 @@ struct SettingsView: View {
     @EnvironmentObject private var store: Store
     @Environment(\.dismiss) private var dismiss
     @StateObject private var launchAtLogin = LaunchAtLoginController()
+    /// Ticks every time macOS reports a display configuration change so the
+    /// Picker re-reads `NSScreen.screens` (which is not a SwiftUI-observed
+    /// value) and re-renders the per-screen entries + disabled state.
+    @State private var displayConfigurationTick: Int = 0
 
     var body: some View {
         VStack(alignment: .leading, spacing: 18) {
@@ -36,6 +41,9 @@ struct SettingsView: View {
                 toggleRow("Minimal mode (hide time + task name)",
                           isOn: $store.settings.minimalMode)
             }
+            section("DISPLAY") {
+                displayRow()
+            }
             section("STARTUP") {
                 toggleRow("Launch DailyNotch at login",
                           isOn: Binding(
@@ -48,6 +56,11 @@ struct SettingsView: View {
         .padding(20)
         .frame(width: 420)
         .background(Color.black)
+        .onReceive(NotificationCenter.default.publisher(
+            for: NSApplication.didChangeScreenParametersNotification
+        )) { _ in
+            displayConfigurationTick &+= 1
+        }
         .preferredColorScheme(.dark)
     }
 
@@ -115,5 +128,78 @@ struct SettingsView: View {
             )
             .frame(width: 130)
         }
+    }
+
+    /// Picker row for the display preference. Reading `displayConfigurationTick`
+    /// inside the body forces a re-render whenever the screen configuration
+    /// changes, so the per-screen list stays in sync with hot-plug events.
+    private func displayRow() -> some View {
+        // Touch the tick so SwiftUI tracks the dependency on the State value.
+        let tick = displayConfigurationTick
+        let screens = NSScreen.screens
+        let externalCount = screens.filter { !$0.isBuiltIn }.count
+        let builtInCount = screens.filter { $0.isBuiltIn }.count
+        let savedPreference = store.settings.displayPreference
+
+        return HStack(alignment: .top) {
+            VStack(alignment: .leading, spacing: 4) {
+                Text("Show the notch on")
+                    .font(.system(size: 13))
+                    .foregroundStyle(Theme.textPrimary)
+                Text(displaySubtitle(screenCount: screens.count))
+                    .font(.system(size: 11))
+                    .foregroundStyle(Theme.textSecondary)
+            }
+            Spacer(minLength: 12)
+            Picker("", selection: $store.settings.displayPreference) {
+                Text("Automatic").tag(DisplayPreference.auto)
+                Text("MacBook's built-in")
+                    .tag(DisplayPreference.builtIn)
+                    .disabled(builtInCount == 0)
+                Text("External monitor")
+                    .tag(DisplayPreference.external)
+                    .disabled(externalCount == 0)
+                if !screens.isEmpty {
+                    Divider()
+                    ForEach(Array(screens.enumerated()), id: \.offset) { _, screen in
+                        if let id = screen.displayID {
+                            Text(screenLabel(for: screen))
+                                .tag(DisplayPreference.specific(id))
+                        }
+                    }
+                }
+                // If a previously-saved .specific ID is no longer connected,
+                // surface it as a non-selectable footnote so the user can see
+                // what was selected and pick a replacement.
+                if case .specific(let savedID) = savedPreference,
+                   !screens.contains(where: { $0.displayID == savedID }) {
+                    Divider()
+                    Text("Saved display offline (ID \(savedID))")
+                        .foregroundStyle(Theme.textSecondary)
+                        .disabled(true)
+                }
+            }
+            .labelsHidden()
+            .pickerStyle(.menu)
+            .frame(width: 200)
+            // Referencing `tick` here makes the dependency explicit and
+            // silences "never used" warnings; the real tracking already
+            // happened in the closure passed to onReceive.
+            .onAppear { _ = tick }
+        }
+    }
+
+    private func displaySubtitle(screenCount: Int) -> String {
+        switch screenCount {
+        case 0: return "No displays detected"
+        case 1: return "1 display connected"
+        default: return "\(screenCount) displays connected"
+        }
+    }
+
+    private func screenLabel(for screen: NSScreen) -> String {
+        let resolution = "\(Int(screen.frame.width))×\(Int(screen.frame.height))"
+        let kind = screen.isBuiltIn ? "Built-in" : "External"
+        return "\(screen.displayName) — \(resolution) (\(kind))"
     }
 }
