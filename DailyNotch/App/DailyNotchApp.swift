@@ -48,6 +48,9 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     private var viewModel: NotchViewModel?
     private let hotkey = GlobalHotkey()
     private var focusCancellable: AnyCancellable?
+    /// Mirrors `store.settings.displayPreference` into the view model so the
+    /// notch window controller can react via `viewModel.$displayPreference`.
+    private var displayPreferenceCancellable: AnyCancellable?
 
     /// Number of user-openable windows currently up. Drives the activation
     /// policy: the app stays `.accessory` (menu-bar only) until the user
@@ -89,8 +92,19 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         UpdateChecker.shared.checkForUpdates()
 
         let vm = NotchViewModel(store: store, focus: focus, metrics: .primary)
+        // Hydrate from the persisted preference before the controller subscribes
+        // to `$displayPreference` so the first `reposition(animated: false)`
+        // already uses the correct screen. Without this, the saved value would
+        // arrive later via the mirror sink and trigger a redundant dock.
+        vm.displayPreference = store.settings.displayPreference
         vm.openTasksWindow = { [weak self] in self?.showTasksWindow() }
         viewModel = vm
+        displayPreferenceCancellable = store.$settings
+            .map(\.displayPreference)
+            .removeDuplicates()
+            .sink { [weak vm] preference in
+                vm?.displayPreference = preference
+            }
         notchController = NotchWindowController(viewModel: vm)
     }
 

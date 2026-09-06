@@ -7,8 +7,18 @@ import Combine
 final class NotchViewModel: ObservableObject {
     @Published var expanded = false
 
+    /// Mirrors `store.settings.displayPreference`. Owned here (not derived) so
+    /// the controller can subscribe to a single source of truth without poking
+    /// into the store. The app delegate keeps this in sync both ways: a user
+    /// change in Settings flows `store → vm`; on launch the saved value flows
+    /// in once. See `DailyNotchApp.applicationDidFinishLaunching`.
+    @Published var displayPreference: DisplayPreference = .auto
+
     let store: Store
     let focus: FocusTimer
+    /// Metrics for the fallback screen (used when the preferred screen is not
+    /// currently connected, e.g. external unplugged or clamshell). The active
+    /// screen is recomputed live via `currentScreen` / `currentMetrics`.
     let metrics: NotchMetrics
 
     /// Set by the app so the "expand" arrow / "Add a task" can open the big window.
@@ -22,9 +32,27 @@ final class NotchViewModel: ObservableObject {
 
     // MARK: Layout targets (points)
 
+    /// `NSScreen` the notch should anchor to *right now*. Resolved live from
+    /// `displayPreference` against the current `NSScreen.screens`; the captured
+    /// `metrics.screen` is the last-resort fallback so a totally broken display
+    /// state still produces a sane value.
+    var currentScreen: NSScreen {
+        DisplayResolver.resolve(displayPreference, fallback: metrics.screen)
+    }
+
+    /// `NotchMetrics` derived from `currentScreen`. On screens without a
+    /// physical notch (most externals) `NotchMetrics.init` synthesizes a pill
+    /// (200pt wide, `safeAreaInsets.top` tall) — that is the historical
+    /// behaviour for external displays, preserved here.
+    var currentMetrics: NotchMetrics {
+        NotchMetrics(screen: currentScreen)
+    }
+
     /// Real hardware notch footprint — content must never sit inside this.
-    var notchWidth: CGFloat { metrics.notchWidth }
-    var notchHeight: CGFloat { metrics.notchHeight }
+    /// Read from `currentMetrics` so the dimensions follow the screen as the
+    /// user switches displays.
+    var notchWidth: CGFloat { currentMetrics.notchWidth }
+    var notchHeight: CGFloat { currentMetrics.notchHeight }
 
     /// Width of each "ear" flanking the notch in the collapsed active pill.
     let activeEarWidth: CGFloat = 158

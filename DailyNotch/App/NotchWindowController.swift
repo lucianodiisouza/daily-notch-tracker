@@ -61,13 +61,22 @@ final class NotchWindowController {
             .sink { [weak self] _ in self?.reposition(animated: false) }
             .store(in: &cancellables)
 
+        // Re-dock when the user picks a different display in Settings. Source
+        // and target frames live in different coordinate spaces (different
+        // `NSScreen.frame` origins), so a `setFrame` animation would interpolate
+        // linearly across both spaces and look broken — snap instead.
+        viewModel.$displayPreference
+            .dropFirst()   // init() already repositioned once
+            .sink { [weak self] _ in self?.reposition(animated: false) }
+            .store(in: &cancellables)
+
         reposition(animated: false)
         panel.orderFrontRegardless()
     }
 
     @MainActor
     private func reposition(animated: Bool) {
-        let screen = viewModel.metrics.screen
+        let screen = viewModel.currentScreen
         let size = viewModel.targetSize
         // Snap to whole pixels. A fractional origin/size lands the rounded pill
         // + tray on different subpixels each open/close, which makes the bottom
