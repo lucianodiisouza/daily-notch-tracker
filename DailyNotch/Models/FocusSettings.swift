@@ -22,6 +22,12 @@ struct FocusSettings: Codable, Equatable {
     /// contours the hardware notch. The progress timeline is independent
     /// (governed by `showTimeline`).
     var minimalMode: Bool = false
+    /// Which physical display the notch anchors to. Resolved live by
+    /// `DisplayResolver` against the current set of `NSScreen`s, so a
+    /// disconnected saved display never crashes — it falls back to the
+    /// active screen. Default `.auto` preserves the historical behaviour
+    /// (follow `NSScreen.main`).
+    var displayPreference: DisplayPreference = .auto
 
     static let `default` = FocusSettings()
 
@@ -40,6 +46,7 @@ struct FocusSettings: Codable, Equatable {
     private enum CodingKeys: String, CodingKey {
         case focusMinutes, notificationsEnabled, playSound
         case showTimeline, rainbowTimeline, minimalMode
+        case displayPreference
     }
 
     init() {}
@@ -53,5 +60,9 @@ struct FocusSettings: Codable, Equatable {
         showTimeline = try c.decodeIfPresent(Bool.self, forKey: .showTimeline) ?? d.showTimeline
         rainbowTimeline = try c.decodeIfPresent(Bool.self, forKey: .rainbowTimeline) ?? d.rainbowTimeline
         minimalMode = try c.decodeIfPresent(Bool.self, forKey: .minimalMode) ?? d.minimalMode
+        // Missing in pre-feature data files → fall back to `.auto` (the
+        // pre-feature behaviour). A present-but-malformed value is tolerated
+        // by `DisplayPreference.init(from:)` which falls back to `.auto`.
+        displayPreference = try c.decodeIfPresent(DisplayPreference.self, forKey: .displayPreference) ?? d.displayPreference
     }
 }
