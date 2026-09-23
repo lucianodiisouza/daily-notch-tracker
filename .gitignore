@@ -19,3 +19,7 @@ xcuserdata/
 
 # App data written during dev
 *.xcodeproj/*.xcworkspace/xcuserdata/
+
+# Signing settings for scripts/create-dmg.sh
+.env.local
+*.dmg
