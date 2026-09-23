@@ -165,7 +165,7 @@ struct TasksWindowView: View {
             calendarBanner(
                 icon: "calendar.badge.plus",
                 title: "Show today's calendar events",
-                detail: "We read your events — we never write to them.",
+                detail: "DailyNotch only reads your events and never changes them.",
                 action: "Connect calendar"
             ) {
                 _Concurrency.Task { await calendar.requestAccess() }
