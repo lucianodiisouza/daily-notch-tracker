@@ -7,7 +7,15 @@ import SwiftUI
 final class Store: ObservableObject {
     @Published var tasks: [Task] = []
     @Published var sessions: [FocusSession] = []
-    @Published var settings: FocusSettings = .default
+    /// Saved as soon as it changes. Settings used to persist only when a task
+    /// changed afterwards, so a tweak followed by Quit was lost.
+    @Published var settings: FocusSettings = .default {
+        didSet { if settings != oldValue && !isLoading { save() } }
+    }
+
+    /// Set while `load()` fills the properties, so reading the file doesn't
+    /// write it straight back.
+    private var isLoading = false
 
     /// Routing bus: set to a task id to request the Tasks window open its detail.
     @Published var pendingOpenTaskID: UUID?
@@ -150,8 +158,18 @@ final class Store: ObservableObject {
     }
 
     private func load() {
-        guard let data = try? Data(contentsOf: fileURL),
-              let payload = try? JSONDecoder().decode(Payload.self, from: data) else { return }
+        guard let data = try? Data(contentsOf: fileURL) else { return }
+        guard let payload = try? JSONDecoder().decode(Payload.self, from: data) else {
+            // Unreadable file: keep a copy before the next save overwrites it,
+            // so the user's tasks can still be recovered by hand.
+            let stamp = Int(Date().timeIntervalSince1970)
+            let backup = fileURL.deletingPathExtension()
+                .appendingPathExtension("unreadable-\(stamp).json")
+            try? FileManager.default.copyItem(at: fileURL, to: backup)
+            return
+        }
+        isLoading = true
+        defer { isLoading = false }
         tasks = payload.tasks
         sessions = payload.sessions
         settings = payload.settings ?? .default
