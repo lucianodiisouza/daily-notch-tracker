@@ -9,6 +9,10 @@ import Combine
 /// The `MenuBarExtra` body re-evaluates whenever this `ObservableObject`
 /// changes — same reason `FocusMenuState` exists: the `AppDelegate`'s own
 /// properties don't drive the menu.
+///
+/// The Mac App Store build is compiled with the `APPSTORE` condition
+/// (see `scripts/appstore.sh`): the store delivers its updates, so there the
+/// checker never touches the network.
 @MainActor
 final class UpdateChecker: ObservableObject {
     static let shared = UpdateChecker()
@@ -32,6 +36,20 @@ final class UpdateChecker: ObservableObject {
     private let minInterval: TimeInterval = 60 * 60 * 6
     private var lastCheck: Date?
 
+    /// `false` in the App Store build, where the store handles updates.
+    static var isEnabled: Bool {
+        #if APPSTORE
+        return false
+        #else
+        return true
+        #endif
+    }
+
+    /// Set while a manual check (from Settings) is in flight.
+    @Published private(set) var isChecking = false
+    /// When the last check finished, successful or not.
+    @Published private(set) var lastChecked: Date?
+
     /// The running app version (`CFBundleShortVersionString`), e.g. "0.0.1".
     var currentVersion: String {
         Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String ?? "0.0.0"
@@ -42,6 +60,7 @@ final class UpdateChecker: ObservableObject {
     /// `force` is set. Network/parse failures are swallowed — a failed check
     /// simply leaves the menu in its "up to date" state.
     func checkForUpdates(force: Bool = false) {
+        guard Self.isEnabled else { return }
         if !force, let last = lastCheck, Date().timeIntervalSince(last) < minInterval {
             return
         }
@@ -54,8 +73,13 @@ final class UpdateChecker: ObservableObject {
 
         // Fully-qualified: the app defines its own `Task` model, which would
         // otherwise shadow Swift concurrency's `Task` here.
+        isChecking = true
         _Concurrency.Task { [weak self] in
             guard let self else { return }
+            defer {
+                self.isChecking = false
+                self.lastChecked = Date()
+            }
             do {
                 let (data, response) = try await URLSession.shared.data(for: request)
                 guard let http = response as? HTTPURLResponse, http.statusCode == 200 else { return }
