@@ -6,7 +6,7 @@ import CoreGraphics
 /// Stored in `FocusSettings` and consumed by `DisplayResolver` at the moment a
 /// `NotchViewModel` needs a screen — never cached as an `NSScreen` reference,
 /// because screens come and go at runtime.
-enum DisplayPreference: Codable, Equatable {
+enum DisplayPreference: Codable, Hashable {
     /// Follow `NSScreen.main` (the display with the focused menu bar). This is
     /// the historical default and preserves the pre-feature behaviour exactly.
     case auto
