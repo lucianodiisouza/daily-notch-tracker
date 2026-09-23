@@ -106,6 +106,8 @@ struct Screen<Content: View>: View {
     let caption: String
     /// Whether the content hangs from the menu bar (the notch shots) or floats as a window.
     var fromNotch = false
+    /// Where the headline sits under a notch render.
+    var notchTextTop: CGFloat = 600
     @ViewBuilder let content: Content
 
     var body: some View {
@@ -125,7 +127,7 @@ struct Screen<Content: View>: View {
             .foregroundStyle(.white)
             .multilineTextAlignment(.center)
             .frame(maxWidth: .infinity)
-            .padding(.top, fromNotch ? 520 : 90)
+            .padding(.top, fromNotch ? notchTextTop : 90)
             if !fromNotch {
                 content.padding(.top, 280)
             }
@@ -146,7 +148,7 @@ func screen(_ shot: Shot, lang: String) -> some View {
         let img = image(lang, "notch-expanded")
         Screen(headline: headline, caption: caption, fromNotch: true) {
             Image(nsImage: img).resizable()
-                .frame(width: img.size.width * 1.45, height: img.size.height * 1.45)
+                .frame(width: img.size.width * 1.75, height: img.size.height * 1.75)
                 .shadow(color: .black.opacity(0.5), radius: 30, y: 12)
         }
     case "2-focus":
@@ -154,24 +156,24 @@ func screen(_ shot: Shot, lang: String) -> some View {
         let rgb = image(lang, "notch-focus-rgb")
         let minimal = image(lang, "notch-focus-minimal")
         ZStack(alignment: .top) {
-            Screen(headline: headline, caption: caption, fromNotch: true) {
+            Screen(headline: headline, caption: caption, fromNotch: true, notchTextTop: 250) {
                 Image(nsImage: pill).resizable()
                     .frame(width: pill.size.width * 1.8, height: pill.size.height * 1.8)
             }
-            HStack(spacing: 60) {
+            VStack(spacing: 70) {
                 VStack(spacing: 14) {
                     Image(nsImage: minimal).resizable()
-                        .frame(width: minimal.size.width * 1.6, height: minimal.size.height * 1.6)
-                    Text(lang == "en" ? "Minimal" : "Mínimo").font(.system(size: 20, weight: .semibold))
+                        .frame(width: minimal.size.width * 2.2, height: minimal.size.height * 2.2)
+                    Text(lang == "en" ? "Minimal" : "Mínimo").font(.system(size: 24, weight: .semibold))
                 }
                 VStack(spacing: 14) {
                     Image(nsImage: rgb).resizable()
-                        .frame(width: rgb.size.width * 1.1, height: rgb.size.height * 1.1)
-                    Text(lang == "en" ? "RGB line" : "Linha RGB").font(.system(size: 20, weight: .semibold))
+                        .frame(width: rgb.size.width * 1.5, height: rgb.size.height * 1.5)
+                    Text(lang == "en" ? "RGB line" : "Linha RGB").font(.system(size: 24, weight: .semibold))
                 }
             }
             .foregroundStyle(.white.opacity(0.85))
-            .padding(.top, 700)
+            .padding(.top, 450)
         }
     case "3-tasks":
         Screen(headline: headline, caption: caption) { WindowFrame(image: image(lang, "tasks"), scale: 1.05) }

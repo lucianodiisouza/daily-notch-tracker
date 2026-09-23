@@ -1,40 +1,53 @@
 # DailyNotch
 
-An open-source macOS notch app that turns the space around your MacBook's
-notch into a focus + task tracker. Hover the notch to reveal your to-do list
-and your activity streak. Start a task to run a focus timer that lives
-right in the notch.
+A macOS notch app that turns the space around your MacBook's notch into a
+focus timer and to-do list. Hover the notch to see today's tasks and a month
+of focus, start a block with one click, and watch a progress line fill up
+around the notch while you work.
 
-Built with native SwiftUI + AppKit. macOS 14+.
+Native SwiftUI + AppKit. macOS 14+. English and Brazilian Portuguese.
+
+![Hover the notch for today's tasks and a month of focus](docs/images/1-dashboard.png)
+
+## Install
+
+- **Download:** the notarized `DailyNotch-X.Y.Z.dmg` from
+  [Releases](https://github.com/lucianodiisouza/daily-notch-tracker/releases).
+  Open it and drag DailyNotch to Applications. It is signed with a Developer
+  ID and notarized by Apple, so it opens without warnings.
+- **Mac App Store:** coming soon.
+
+The download build checks GitHub for new versions and offers them in the
+menu bar and in Settings > About. The App Store build updates through the
+store.
 
 ## Features
 
-- Collapsed pill - when a focus session is running, the notch shows a live
-  countdown, the active task, and a blue progress bar hugging the bottom edge.
-- Hover dashboard - expands into two panels:
-  - To Do - today's tasks with one-tap start/pause, drag-to-reorder from a
-    6-dot corner handle, and quick add.
-  - Activity - a GitHub-style heatmap of your focus days plus a running streak.
-- Tasks window - month calendar, Day / Unscheduled toggle with drag-to-reorder,
-  due chips, time estimates, an inline add form, and a refined focus time
-  picker (popover with +/- and preset chips).
-- Focus engine - per-task estimates drive the timer. Custom focus and
-  break lengths. Completed blocks feed the streak.
-- Settings - focus and break durations, notification + sound toggles,
-  launch at login. Open from the gear in the Tasks window header.
-- Calendar integration - read-only view of today's events from EventKit,
-  with a Connect calendar banner on first launch and a deep link to
-  System Settings if access is denied.
-- Global hotkey - `Cmd+Shift+Space` toggles the active focus session from
-  anywhere. The menu bar shows the same shortcut as a visual hint.
-- Local notifications - posted when a focus block ends, with the task
-  title in the body.
-- Launch at login - via `SMAppService.mainApp` (system-managed, no helper
-  binary, no extra privileges).
-- Menu bar - hourglass icon. Open Tasks, Toggle focus, Quit. No Dock icon
-  (`LSUIElement`).
-- Local-first - everything persists to JSON in
-  `~/Library/Application Support/DailyNotch/`.
+- **Focus in the notch** - the countdown and the running task sit on either
+  side of the notch, and a progress line wraps around it and fills up as the
+  block runs. Minimal mode shows only the line; an optional RGB line glows.
+- **Hover dashboard** - today's tasks (check off, start, drag to reorder,
+  change the length inline) next to a month-long activity grid.
+- **Tasks window** - month calendar with dots on days that have open tasks,
+  Day / Unscheduled lists, notes, quick add (⌘N) and per-task focus lengths.
+- **Focus engine** - counts down from a wall-clock deadline, so sleep and a
+  busy Mac don't throw it off. Pauses don't count as focus time. Editing a
+  running task's length re-bases the block.
+- **Settings** - a PrimoDock-style window with search: focus length, notch
+  style, display, alerts, calendar, general, shortcuts and about.
+- **Calendar** - the day's events under your tasks, read-only via EventKit.
+- **Global hotkey** - `⌘⇧Space` starts or stops focus from any app (can be
+  switched off in Settings).
+- **Multiple displays** - pick the screen the notch appears on; screens
+  without a notch get a small pill at the top center.
+- **Menu bar** - hourglass icon: Open Tasks, Start/Stop focus, Settings, Quit.
+  No Dock icon until a window is open.
+- **Private** - no account, no analytics. Everything is saved in one JSON
+  file in the app's sandbox container. See [PRIVACY.md](PRIVACY.md).
+
+![Focus without leaving your work](docs/images/2-focus.png)
+![Plan every day](docs/images/3-tasks.png)
+![Make the notch yours](docs/images/4-notch.png)
 
 ## Build & run
 
@@ -63,31 +76,23 @@ bar, then hover your notch to open the dashboard.
 `wipe.sh` removes the built app, `~/Library/Application Support/DailyNotch`,
 preferences, caches, and any installed copy. It does not touch this repo.
 
-## Installing a release
+## Releasing
 
-Releases are published on GitHub:
-[github.com/lucianodiisouza/daily-notch-tracker/releases](https://github.com/lucianodiisouza/daily-notch-tracker/releases).
-Each release attaches an ad-hoc-signed `DailyNotch-X.Y.Z.dmg`.
+```bash
+./scripts/create-dmg.sh          # Developer ID signed + notarized build/DailyNotch-X.Y.Z.dmg
+./scripts/appstore.sh            # App Store archive, exported to build/appstore
+./scripts/appstore.sh --upload   # ... and uploaded to App Store Connect
+```
 
-### Running an unsigned (ad-hoc signed) build
+`create-dmg.sh` reads `DAILYNOTCH_SIGN_IDENTITY` and `DAILYNOTCH_NOTARY_PROFILE`
+from the environment or a git-ignored `.env.local`. Bump `MARKETING_VERSION`
+and `CURRENT_PROJECT_VERSION` in the Xcode project first. The App Store
+listing text lives in [appstore/LISTING.md](appstore/LISTING.md).
 
-The DMGs published from CI are ad-hoc signed, not notarized. macOS will
-warn on first launch because the developer can't be verified. Two ways
-through:
-
-1. **Right-click Open** - in Finder, right-click the app (or the mounted
-   DMG) and choose **Open**. Confirm the warning. macOS remembers the
-   exception for that app from then on.
-2. **Remove the quarantine attribute** - from the terminal:
-   ```bash
-   xattr -dr com.apple.quarantine /Applications/DailyNotch.app
-   ```
-
-If you have an Apple Developer account and want a notarized build instead,
-add three secrets to the repo (Settings -> Secrets and variables ->
-Actions): `AC_API_KEY_ID`, `AC_API_KEY_ISSUER_ID`, and `AC_API_KEY_P8`
-(an App Store Connect API key). The release workflow picks them up
-automatically on the next tag.
+Screenshots are rendered from the app itself: the Debug build has a snapshot
+mode that draws every window with demo data (see
+`DailyNotch/App/Snapshots.swift`), and `appstore/screenshots/compose.swift`
+lays them out for the store (`--readme` for `docs/images`).
 
 ## Hotkey
 
@@ -110,7 +115,7 @@ DailyNotch/
 +- Focus/         FocusTimer (focus engine), GlobalHotkey, NotificationService
 +- Notch/         Collapsed pill + expanded dashboard (to-do + activity heatmap)
 +- Tasks/         Tasks window (calendar + list + add form), TaskRow, FocusTimePicker
-+- Settings/      Settings window + view + LaunchAtLoginController
++- Settings/      Settings window (sidebar + pages), SettingsKit, LaunchAtLoginController
 +- Sync/          CalendarService (EventKit, read-only) + CalendarAuthModel
 +- Design/        Theme tokens + rounded-bottom NotchShape
 +- Assets.xcassets/   App icon (hourglass on black, system accent)
@@ -143,15 +148,15 @@ consistent:
 - **No em-dashes or en-dashes in code, comments, commit messages, or docs.**
   Use ` - ` (hyphen with surrounding spaces) for parenthetical asides.
   The same rule applies to user-facing strings shown in the app.
-- **CHANGELOG is auto-generated** from your commit messages by `git-cliff`
-  in the release pipeline. You do not need to touch `CHANGELOG.md` in your
-  PR. A new section appears under your commit type on the next tag.
+- **CHANGELOG** is written at release time from the commit messages
+  (`cliff.toml` holds the git-cliff config). You do not need to touch
+  `CHANGELOG.md` in your PR.
 - **Before opening a PR**, run a clean Debug build locally and exercise
-  the area you touched. The release workflow runs on every push to `main`
-  and a green check on your branch is the easiest way to know it's good.
-- **App icon** is committed under `DailyNotch/Assets.xcassets/AppIcon.appiconset/`.
-  Don't regenerate the slots yourself - if you change the master, re-run
-  `sips` to refresh the derived sizes.
+  the area you touched. The build workflow runs on every pull request and
+  push to `main`; a green check is the easiest way to know it's good.
+- **App icon** is drawn by `scripts/generate-icon.swift`, which writes every
+  size into `DailyNotch/Assets.xcassets/AppIcon.appiconset/`. Change the
+  script, not the PNGs.
 
 ### Project file format
 

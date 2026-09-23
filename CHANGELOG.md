@@ -5,6 +5,31 @@ All notable changes to this project will be documented in this file.
 The format is based on [Conventional Commits](https://www.conventionalcommits.org/),
 and this project adheres to [Semantic Versioning](https://semver.org/).
 
+## [1.0.0] - 2026-09-22
+
+### 🚀 Features
+
+- *(settings)* PrimoDock-style settings window with search: Focus, Notch, Display, Alerts, Calendar, General, Shortcuts, About
+- *(settings)* Choose the display the notch appears on
+- *(settings)* Today's focus time, completed blocks and streak
+- *(settings)* ⌘⇧Space can be switched off, and says when another app owns it
+- *(app)* Settings in the menu bar (⌘,)
+- *(app)* New app icon
+- *(app)* Brazilian Portuguese
+- *(app)* Signed with Developer ID and notarized; App Sandbox; ready for the Mac App Store
+- *(tasks)* Days with open tasks are marked in the calendar; resizable window; ⌘N and ⌘T
+
+### 🐛 Bug Fixes
+
+- *(focus)* The timer counts down from a wall-clock deadline, so sleep no longer freezes it; pauses don't count as focus
+- *(focus)* A running block follows edits to its task's length and title
+- *(focus)* No more double sound at the end of a block
+- *(notch)* The expanded panel's bottom line is no longer cut off
+- *(store)* Settings are saved as soon as they change
+- *(store)* An unreadable data file is backed up instead of overwritten
+- *(app)* The Tasks window keeps its Dock icon when reopened
+- *(display)* The display picker compiles
+
 ## [0.0.2] - 2026-08-29
 
 ### 🚀 Features
