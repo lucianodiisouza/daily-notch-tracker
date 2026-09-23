@@ -121,7 +121,7 @@ struct TaskDetailView: View {
                                       @ViewBuilder _ content: () -> Content) -> some View {
         VStack(alignment: .leading, spacing: 6) {
             HStack {
-                Text(label.uppercased())
+                Text(label.localized.uppercased())
                     .font(.system(size: 10, weight: .semibold))
                     .foregroundStyle(Theme.textSecondary)
                 Spacer()

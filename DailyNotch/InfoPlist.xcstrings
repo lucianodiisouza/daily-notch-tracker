@@ -1,0 +1,36 @@
+{
+  "sourceLanguage": "en",
+  "strings": {
+    "NSCalendarsFullAccessUsageDescription": {
+      "localizations": {
+        "pt-BR": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "O DailyNotch mostra os eventos do dia ao lado das suas tarefas. Ele só lê o seu calendário e nunca escreve nele."
+          }
+        }
+      }
+    },
+    "NSCalendarsUsageDescription": {
+      "localizations": {
+        "pt-BR": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "O DailyNotch mostra os eventos do dia ao lado das suas tarefas. Ele só lê o seu calendário e nunca escreve nele."
+          }
+        }
+      }
+    },
+    "NSHumanReadableCopyright": {
+      "localizations": {
+        "pt-BR": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "© 2026 Luciano de Souza. Licença MIT."
+          }
+        }
+      }
+    }
+  },
+  "version": "1.0"
+}

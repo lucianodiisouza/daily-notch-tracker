@@ -2,7 +2,8 @@ import SwiftUI
 
 /// Simple month grid with prev/next navigation; taps select a day.
 /// Layout notes:
-/// - Two-letter weekday labels so Saturday and Sunday don't both read "S".
+/// - Three-letter weekday labels in the user's language, so no two days read
+///   the same (two letters collide in Portuguese: Qua/Qui, Seg/Sex).
 /// - Today gets a tiny accent dot under the number, so it's visible even
 ///   when it isn't the selected day. Other days with unfinished tasks get a
 ///   gray one, so planned days stand out at a glance.
@@ -15,7 +16,13 @@ struct CalendarView: View {
     @State private var visibleMonth: Date = Date()
 
     private let cal = Calendar.current
-    private let weekdays = ["Mo", "Tu", "We", "Th", "Fr", "Sa", "Su"]
+    /// Short weekday names in the user's language, Monday first.
+    private let weekdays: [String] = {
+        let symbols = Calendar.current.shortWeekdaySymbols   // Sunday first
+        return (symbols[1...] + symbols[..<1]).map {
+            String($0.replacingOccurrences(of: ".", with: "").prefix(3)).capitalized
+        }
+    }()
     private let cellHeight: CGFloat = 32
     private let dotSize: CGFloat = 3
 

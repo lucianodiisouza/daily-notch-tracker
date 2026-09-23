@@ -107,7 +107,7 @@ struct TasksWindowView: View {
                     .foregroundStyle(Theme.textPrimary)
                 Spacer()
                 Picker("", selection: $tab) {
-                    ForEach(Tab.allCases, id: \.self) { Text($0.rawValue).tag($0) }
+                    ForEach(Tab.allCases, id: \.self) { Text($0.rawValue.localized).tag($0) }
                 }
                 .pickerStyle(.segmented)
                 .frame(width: 200)
@@ -210,13 +210,13 @@ struct TasksWindowView: View {
                 .foregroundStyle(Theme.accent)
                 .padding(.top, 1)
             VStack(alignment: .leading, spacing: 4) {
-                Text(title)
+                Text(title.localized)
                     .font(.system(size: 12, weight: .semibold))
                     .foregroundStyle(Theme.textPrimary)
-                Text(detail)
+                Text(detail.localized)
                     .font(.system(size: 11))
                     .foregroundStyle(Theme.textSecondary)
-                Button(action) { perform() }
+                Button(action.localized) { perform() }
                     .buttonStyle(.plain)
                     .font(.system(size: 11, weight: .semibold))
                     .foregroundStyle(Theme.accent)
@@ -236,7 +236,7 @@ struct TasksWindowView: View {
                     .font(.system(size: 12, weight: .semibold))
                     .foregroundStyle(Theme.textSecondary)
                 Spacer()
-                Text("\(calendar.events.count) event\(calendar.events.count == 1 ? "" : "s")")
+                Text("\(calendar.events.count) events")
                     .font(.system(size: 10))
                     .foregroundStyle(Theme.textSecondary)
             }
@@ -257,7 +257,7 @@ struct TasksWindowView: View {
                 .font(.system(size: 11, weight: .medium, design: .monospaced))
                 .foregroundStyle(Theme.textSecondary)
                 .frame(width: 60, alignment: .leading)
-            Text(event.title ?? "(untitled)")
+            Text(event.title ?? String(localized: "Untitled event"))
                 .font(.system(size: 12))
                 .foregroundStyle(Theme.textPrimary)
                 .lineLimit(1)
@@ -276,7 +276,8 @@ struct TasksWindowView: View {
     }
 
     private var headerTitle: String {
-        Calendar.current.isDateInToday(selectedDate) ? "Today" : selectedDate.formatted(.dateTime.month().day())
+        Calendar.current.isDateInToday(selectedDate)
+            ? String(localized: "Today") : selectedDate.formatted(.dateTime.month().day())
     }
 
     private var addForm: some View {
@@ -330,7 +331,7 @@ struct TasksWindowView: View {
     }
 
     private func counter(_ label: String, _ count: Int, _ limit: Int) -> some View {
-        Text("\(label) \(count)/\(limit)")
+        Text("\(label.localized) \(count)/\(limit)")
             .font(.system(size: 10, weight: .medium).monospacedDigit())
             .foregroundStyle(count >= limit ? Theme.accent : Theme.textSecondary)
     }
