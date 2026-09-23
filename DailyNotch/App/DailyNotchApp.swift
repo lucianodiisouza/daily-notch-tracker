@@ -77,6 +77,9 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         store.onTaskDeactivated = { [weak self] id, record in
             self?.focus.stopIfActive(id, record: record)
         }
+        store.onTaskUpdated = { [weak self] task in
+            self?.focus.taskDidChange(task)
+        }
 
         // If the user has notifications on, request authorization on launch so
         // the system prompt is out of the way before the first focus block.

@@ -26,6 +26,10 @@ final class Store: ObservableObject {
     /// false on delete — a deleted task has nowhere to count time against).
     var onTaskDeactivated: (_ id: UUID, _ record: Bool) -> Void = { _, _ in }
 
+    /// Called after a task is edited, so a running block can pick up a new
+    /// length or title. Wired up by the app.
+    var onTaskUpdated: (_ task: Task) -> Void = { _ in }
+
     private let fileURL: URL
     /// The JSON file everything is saved in, for "Show in Finder".
     var dataFileURL: URL { fileURL }
@@ -62,6 +66,7 @@ final class Store: ObservableObject {
         guard let idx = tasks.firstIndex(where: { $0.id == task.id }) else { return }
         tasks[idx] = task
         save()
+        onTaskUpdated(task)
     }
 
     func delete(_ task: Task) {

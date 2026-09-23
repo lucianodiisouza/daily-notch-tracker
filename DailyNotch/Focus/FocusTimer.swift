@@ -141,6 +141,23 @@ final class FocusTimer: ObservableObject {
         stop(record: record)
     }
 
+    /// Keep the running block in step with its task after an edit: a new
+    /// title shows in the notch, and a new length re-bases the countdown while
+    /// keeping the time already focused. Shortening it below that finishes the
+    /// block right away. No-op for other tasks.
+    func taskDidChange(_ task: Task) {
+        guard isActive, activeTask?.id == task.id else { return }
+        activeTask = task
+        let newTotal = TimeInterval(max(1, task.estimateMinutes) * 60)
+        guard newTotal != total else { return }
+        updateRemaining()
+        let focused = total - remaining
+        total = newTotal
+        remaining = max(0, newTotal - focused)
+        if state == .running { endsAt = Date().addingTimeInterval(remaining) }
+        if remaining <= 0 { complete() }
+    }
+
     /// Toggle used by the global hotkey: if a session is in flight, stop it;
     /// otherwise start the first undone task scheduled for today. When the
     /// day's list is empty, fall back to a blank session using the user's
