@@ -193,7 +193,12 @@ func write<V: View>(_ view: V, scale: CGFloat, to url: URL) {
     let renderer = ImageRenderer(content: view)
     renderer.scale = scale
     guard let cg = renderer.cgImage else { fatalError("render failed: \(url.lastPathComponent)") }
-    try! NSBitmapImageRep(cgImage: cg).representation(using: .png, properties: [:])!.write(to: url)
+    // Flatten to 8-bit sRGB without alpha: the renderer's 16-bit RGBA made 15MB files, too big for the store upload.
+    let ctx = CGContext(data: nil, width: cg.width, height: cg.height, bitsPerComponent: 8, bytesPerRow: 0,
+                        space: CGColorSpace(name: CGColorSpace.sRGB)!,
+                        bitmapInfo: CGImageAlphaInfo.noneSkipLast.rawValue)!
+    ctx.draw(cg, in: CGRect(x: 0, y: 0, width: cg.width, height: cg.height))
+    try! NSBitmapImageRep(cgImage: ctx.makeImage()!).representation(using: .png, properties: [:])!.write(to: url)
     print("wrote \(url.path)")
 }
 
