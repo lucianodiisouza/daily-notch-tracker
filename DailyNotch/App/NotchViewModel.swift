@@ -76,13 +76,31 @@ final class NotchViewModel: ObservableObject {
     /// there are more) alongside the weekday activity grid.
     static let todoRowHeight: CGFloat = 52
     static let visibleTodoRows = 2
+    static let todoRowGap: CGFloat = 8
+    /// Fixed heights of the dashboard's pieces. The views pin themselves to
+    /// these so `expandedHeight` adds up to exactly what they draw; when the
+    /// sum came up short the content overflowed the window and the pill's
+    /// bottom edge (with the accent line) was cut off.
+    static let headerHeight: CGFloat = 22
+    static let columnSpacing: CGFloat = 8
+    static let addRowHeight: CGFloat = 28
+    static let heatmapHeaderSpacing: CGFloat = 10
+    static let dashboardTopGap: CGFloat = 4
+    static let dashboardBottomPadding: CGFloat = 18
+
+    static var todoListHeight: CGFloat {
+        let rows = CGFloat(visibleTodoRows)
+        return rows * todoRowHeight + (rows - 1) * todoRowGap
+    }
 
     var expandedHeight: CGFloat {
-        let rows = CGFloat(Self.visibleTodoRows)
-        let todoColumn = 22 + rows * Self.todoRowHeight + (rows - 1) * 6 + 30
-        // header + only the week-rows the current month needs through today.
-        let heatmapColumn = 22 + StreakHeatmap.gridHeight(rows: StreakHeatmap.weekRows(for: Date()))
-        return notchHeight + 4 + max(todoColumn, heatmapColumn) + 14
+        let todoColumn = Self.headerHeight + Self.columnSpacing + Self.todoListHeight
+            + Self.columnSpacing + Self.addRowHeight
+        // Header + only the week-rows the current month needs through today.
+        let heatmapColumn = Self.headerHeight + Self.heatmapHeaderSpacing
+            + StreakHeatmap.gridHeight(rows: StreakHeatmap.weekRows(for: Date()))
+        return notchHeight + Self.dashboardTopGap + max(todoColumn, heatmapColumn)
+            + Self.dashboardBottomPadding
     }
 
     var collapsedWidth: CGFloat {

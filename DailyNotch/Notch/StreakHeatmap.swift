@@ -43,10 +43,11 @@ struct StreakHeatmap: View {
     var body: some View {
         let counts = countsByDay()
         let today = cal.startOfDay(for: Date())
-        VStack(alignment: .leading, spacing: 10) {
+        VStack(alignment: .leading, spacing: NotchViewModel.heatmapHeaderSpacing) {
             Label("Activity", systemImage: "chart.bar.fill")
                 .font(.system(size: 12, weight: .semibold))
                 .foregroundStyle(Theme.textPrimary)
+                .frame(height: NotchViewModel.headerHeight)
 
             VStack(spacing: gap) {
                 ForEach(0..<rows, id: \.self) { row in

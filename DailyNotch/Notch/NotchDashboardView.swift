@@ -17,8 +17,8 @@ struct NotchDashboardView: View {
         }
         .padding(.horizontal, 18)
         // Clear the physical notch: content starts below the notch height.
-        .padding(.top, vm.notchHeight + 4)
-        .padding(.bottom, 14)
+        .padding(.top, vm.notchHeight + NotchViewModel.dashboardTopGap)
+        .padding(.bottom, NotchViewModel.dashboardBottomPadding)
     }
 }
 
@@ -32,7 +32,7 @@ struct TodoPanel: View {
     @State private var dragOffset: CGFloat = 0
 
     private let rowHeight = NotchViewModel.todoRowHeight
-    private let rowGap: CGFloat = 8
+    private let rowGap = NotchViewModel.todoRowGap
 
     /// Today's tasks with done ones sorted to the bottom (Store.isBefore
     /// handles that). We keep completed tasks visible so checking one off
@@ -40,7 +40,7 @@ struct TodoPanel: View {
     private var todays: [Task] { store.tasks(on: Date()) }
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 8) {
+        VStack(alignment: .leading, spacing: NotchViewModel.columnSpacing) {
             HStack {
                 Text("To Do")
                     .font(.system(size: 13, weight: .semibold))
@@ -55,6 +55,7 @@ struct TodoPanel: View {
                 }
                 .buttonStyle(.plain)
             }
+            .frame(height: NotchViewModel.headerHeight)
 
             // Exactly two rows tall; scrolls when there are more tasks.
             ScrollView(.vertical, showsIndicators: false) {
@@ -77,15 +78,14 @@ struct TodoPanel: View {
                     }
                 }
             }
-            .frame(height: CGFloat(NotchViewModel.visibleTodoRows) * rowHeight
-                   + CGFloat(NotchViewModel.visibleTodoRows - 1) * rowGap)
+            .frame(height: NotchViewModel.todoListHeight)
 
             Button { vm.openTasksWindow() } label: {
                 Text("Add a task")
                     .font(.system(size: 12))
                     .foregroundStyle(Theme.textSecondary)
                     .frame(maxWidth: .infinity, alignment: .leading)
-                    .padding(.vertical, 6)
+                    .frame(height: NotchViewModel.addRowHeight)
                     .contentShape(Rectangle())
             }
             .buttonStyle(.plain)

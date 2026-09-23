@@ -28,6 +28,9 @@ final class NotchWindowController {
         // NSHostingView manages its own layer's background, so painting via CALayer
         // here renders translucent and clips content — SwiftUI is the reliable path.
         hosting = NSHostingView(rootView: content)
+        // The controller sets the panel's frame; SwiftUI must not add size
+        // constraints of its own, or the two disagree mid-animation.
+        hosting.sizingOptions = []
         panel.contentView = hosting
 
         // Let the view model tell whether the cursor is still over the panel when

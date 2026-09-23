@@ -13,22 +13,30 @@ struct RootNotchView: View {
     private var pillCorner: CGFloat { vm.expanded ? Theme.notchCorner : 12 }
 
     var body: some View {
-        ZStack(alignment: .top) {
-            // Clip ONLY the black pill + content to the notch shape. The accent
-            // tray is drawn on top, OUTSIDE the clip: it's fully inset within the
-            // pill, so it never needs clipping — and running it through the clip
-            // is exactly what shaved its rounded bottom corners flat (the "cut
-            // border"), no matter how the corner radius was tuned.
+        // The pill and the tray take the window's size, never the content's:
+        // the window owns the frame animation, and content that was taller
+        // than the window used to stretch the pill past the window's bottom
+        // edge, cutting off the bottom line. Content is pinned to the same
+        // size and clipped, so it can never push them out again.
+        GeometryReader { geo in
             ZStack(alignment: .top) {
-                NotchShape(bottomRadius: pillCorner).fill(Color.black)
-                content
+                // Clip ONLY the black pill + content to the notch shape. The accent
+                // tray is drawn on top, OUTSIDE the clip: it's fully inset within the
+                // pill, so it never needs clipping — and running it through the clip
+                // is exactly what shaved its rounded bottom corners flat.
+                ZStack(alignment: .top) {
+                    NotchShape(bottomRadius: pillCorner).fill(Color.black)
+                    content
+                        .frame(width: geo.size.width, height: geo.size.height, alignment: .top)
+                }
+                .clipShape(NotchShape(bottomRadius: pillCorner))
+                trayOverlay
             }
-            .clipShape(NotchShape(bottomRadius: pillCorner))
-            trayOverlay
+            .frame(width: geo.size.width, height: geo.size.height, alignment: .top)
         }
-        // Fill whatever size the NSWindow animates to — the window owns the
-        // frame animation; the view must NOT animate its own size too.
-        .frame(maxWidth: .infinity, maxHeight: .infinity)
+        // The panel overlaps the menu bar and the notch; a safe-area inset
+        // there must not shift or shrink the drawing.
+        .ignoresSafeArea()
         .contentShape(Rectangle())
         .onHover { hovering in vm.hover(hovering) }
     }
