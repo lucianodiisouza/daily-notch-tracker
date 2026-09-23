@@ -25,6 +25,7 @@
 		AA00000000000000000080 /* Exceptions */ = {
 			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
 			membershipExceptions = (
+				"DailyNotch-AppStore.entitlements",
 				DailyNotch.entitlements,
 				Info.plist,
 			);

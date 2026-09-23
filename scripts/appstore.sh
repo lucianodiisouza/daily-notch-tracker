@@ -6,7 +6,7 @@
 #   ./scripts/appstore.sh --upload   archive and upload the build to App Store Connect
 #
 # The build is compiled with the APPSTORE condition, which drops the GitHub release check (the store delivers
-# updates). Signing is automatic through the Apple account signed in to Xcode (Settings > Accounts). The first run
+# updates), and signed without the network entitlement it no longer needs. Signing is automatic through the Apple account signed in to Xcode (Settings > Accounts). The first run
 # creates the Apple Distribution and Mac Installer Distribution certificates and the App Store profile if they are
 # missing. The app record must already exist in App Store Connect before --upload.
 #
@@ -31,6 +31,7 @@ xcodebuild -project DailyNotch.xcodeproj -scheme DailyNotch \
   -archivePath "$ARCHIVE" \
   -allowProvisioningUpdates \
   SWIFT_ACTIVE_COMPILATION_CONDITIONS='$(inherited) APPSTORE' \
+  CODE_SIGN_ENTITLEMENTS=DailyNotch/DailyNotch-AppStore.entitlements \
   -quiet archive
 
 # Same options file, with the destination this run asked for.
