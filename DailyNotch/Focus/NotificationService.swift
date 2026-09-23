@@ -16,17 +16,31 @@ final class NotificationService {
             .requestAuthorization(options: [.alert, .sound]) { _, _ in }
     }
 
+    /// Whether macOS currently lets DailyNotch post notifications. `nil` while
+    /// the user hasn't been asked yet.
+    func isAuthorized() async -> Bool? {
+        let settings = await UNUserNotificationCenter.current().notificationSettings()
+        switch settings.authorizationStatus {
+        case .notDetermined: return nil
+        case .denied: return false
+        default: return true
+        }
+    }
+
     /// Post the "focus block complete" notification immediately. Caller
     /// checks `FocusSettings.notificationsEnabled` before invoking.
     func postFocusComplete(taskTitle: String?) {
         let content = UNMutableNotificationContent()
-        content.title = "Focus block complete"
+        content.title = String(localized: "Focus block complete")
         if let task = taskTitle, !task.isEmpty {
-            content.body = "Time for a break — finished \u{201C}\(task)\u{201D}."
+            content.body = String(localized: "You finished \u{201C}\(task)\u{201D}. Time for a break.")
         } else {
-            content.body = "Time for a break."
+            content.body = String(localized: "Time for a break.")
         }
-        content.sound = .default
+        // Silent on purpose: the focus timer plays its own chime when the
+        // "Play sound" setting is on, so a notification sound would double it
+        // (and ignore that setting when it is off).
+        content.sound = nil
 
         let request = UNNotificationRequest(
             identifier: "focus.complete.\(UUID().uuidString)",
