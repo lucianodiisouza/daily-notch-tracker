@@ -28,6 +28,9 @@ struct FocusSettings: Codable, Equatable {
     /// active screen. Default `.auto` preserves the historical behaviour
     /// (follow `NSScreen.main`).
     var displayPreference: DisplayPreference = .auto
+    /// Whether ⌘⇧Space toggles the focus session from any app. Off frees the
+    /// combination for another app that wants it.
+    var globalHotkeyEnabled: Bool = true
 
     static let `default` = FocusSettings()
 
@@ -46,7 +49,7 @@ struct FocusSettings: Codable, Equatable {
     private enum CodingKeys: String, CodingKey {
         case focusMinutes, notificationsEnabled, playSound
         case showTimeline, rainbowTimeline, minimalMode
-        case displayPreference
+        case displayPreference, globalHotkeyEnabled
     }
 
     init() {}
@@ -64,5 +67,6 @@ struct FocusSettings: Codable, Equatable {
         // pre-feature behaviour). A present-but-malformed value is tolerated
         // by `DisplayPreference.init(from:)` which falls back to `.auto`.
         displayPreference = try c.decodeIfPresent(DisplayPreference.self, forKey: .displayPreference) ?? d.displayPreference
+        globalHotkeyEnabled = try c.decodeIfPresent(Bool.self, forKey: .globalHotkeyEnabled) ?? d.globalHotkeyEnabled
     }
 }

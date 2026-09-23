@@ -27,13 +27,21 @@ final class Store: ObservableObject {
     var onTaskDeactivated: (_ id: UUID, _ record: Bool) -> Void = { _, _ in }
 
     private let fileURL: URL
+    /// The JSON file everything is saved in, for "Show in Finder".
+    var dataFileURL: URL { fileURL }
 
-    init() {
-        let base = FileManager.default
-            .urls(for: .applicationSupportDirectory, in: .userDomainMask)[0]
-            .appendingPathComponent("DailyNotch", isDirectory: true)
-        try? FileManager.default.createDirectory(at: base, withIntermediateDirectories: true)
-        fileURL = base.appendingPathComponent("data.json")
+    /// `fileURL` defaults to Application Support/DailyNotch/data.json; the
+    /// Debug snapshot mode points it at a scratch file instead.
+    init(fileURL: URL? = nil) {
+        if let fileURL {
+            self.fileURL = fileURL
+        } else {
+            let base = FileManager.default
+                .urls(for: .applicationSupportDirectory, in: .userDomainMask)[0]
+                .appendingPathComponent("DailyNotch", isDirectory: true)
+            try? FileManager.default.createDirectory(at: base, withIntermediateDirectories: true)
+            self.fileURL = base.appendingPathComponent("data.json")
+        }
         load()
     }
 
@@ -133,6 +141,20 @@ final class Store: ObservableObject {
             day = cal.date(byAdding: .day, value: -1, to: day)!
         }
         return streak
+    }
+
+    /// Focus time recorded today, in seconds.
+    var focusedSecondsToday: Int {
+        let cal = Calendar.current
+        return sessions
+            .filter { cal.isDateInToday($0.startedAt) }
+            .reduce(0) { $0 + Int($1.duration) }
+    }
+
+    /// Focus blocks that ran to the end today.
+    var completedBlocksToday: Int {
+        let cal = Calendar.current
+        return sessions.filter { $0.completed && cal.isDateInToday($0.startedAt) }.count
     }
 
     func recordSession(_ session: FocusSession) {

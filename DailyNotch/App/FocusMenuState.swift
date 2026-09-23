@@ -9,6 +9,9 @@ import Combine
 @MainActor
 final class FocusMenuState: ObservableObject {
     @Published private(set) var isFocusing: Bool = false
+    /// Whether the ⌘⇧Space hotkey is installed. False when it is switched off,
+    /// or when another app already owns the combination.
+    @Published var hotkeyRegistered: Bool = false
     static let shared = FocusMenuState()
 
     func update(isFocusing: Bool) {

@@ -92,6 +92,14 @@ final class FocusTimer: ObservableObject {
         if remaining <= 0 { complete() }
     }
 
+    #if DEBUG
+    /// Jump ahead in a running block, for the snapshot renderer.
+    func debugAdvance(seconds: TimeInterval) {
+        endsAt = endsAt?.addingTimeInterval(-seconds)
+        updateRemaining()
+    }
+    #endif
+
     /// Re-derive `remaining` from the deadline, whole seconds so the label and
     /// the progress line move in clean steps.
     private func updateRemaining() {

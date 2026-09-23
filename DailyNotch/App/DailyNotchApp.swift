@@ -18,6 +18,8 @@ struct DailyNotchApp: App {
             }
             .keyboardShortcut(.space, modifiers: [.command, .shift])
             Divider()
+            Button("Settings…") { appDelegate.showSettingsWindow() }
+                .keyboardShortcut(",")
             if let update = updateChecker.availableUpdate {
                 Button("Update to \(update.version) available…") {
                     updateChecker.openReleasePage()
@@ -40,6 +42,10 @@ struct DailyNotchApp: App {
 
 @MainActor
 final class AppDelegate: NSObject, NSApplicationDelegate {
+    /// The running delegate. `NSApp.delegate` is SwiftUI's adaptor, not this
+    /// class, so views that need to open a window reach it through here.
+    private(set) static weak var shared: AppDelegate?
+
     let store = Store()
     lazy var focus = FocusTimer(store: store)
     private var notchController: NotchWindowController?
@@ -51,6 +57,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     /// Mirrors `store.settings.displayPreference` into the view model so the
     /// notch window controller can react via `viewModel.$displayPreference`.
     private var displayPreferenceCancellable: AnyCancellable?
+    private var hotkeyCancellable: AnyCancellable?
 
     /// Number of user-openable windows currently up. Drives the activation
     /// policy: the app stays `.accessory` (menu-bar only) until the user
@@ -59,6 +66,10 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     private var userWindowCount = 0
 
     func applicationDidFinishLaunching(_ notification: Notification) {
+        Self.shared = self
+        #if DEBUG
+        if Snapshots.isRequested { Snapshots.run() }
+        #endif
         NSApp.setActivationPolicy(.accessory)   // no Dock icon; lives in the notch
 
         // Completing or deleting a task must stop its running session so the
@@ -80,13 +91,12 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             .removeDuplicates()
             .sink { FocusMenuState.shared.update(isFocusing: $0) }
 
-        // Cmd+Shift+Space: toggle the active focus session from anywhere.
-        hotkey.register(
-            keyCode: UInt32(kVK_Space),
-            modifiers: UInt32(cmdKey | shiftKey)
-        ) { [weak self] in
-            self?.focus.toggleStartStop()
-        }
+        // Cmd+Shift+Space: toggle the active focus session from anywhere,
+        // unless the user switched it off in Settings.
+        hotkeyCancellable = store.$settings
+            .map(\.globalHotkeyEnabled)
+            .removeDuplicates()
+            .sink { [weak self] enabled in self?.applyHotkey(enabled) }
 
         // Check GitHub for a newer release so the menu can offer an update.
         UpdateChecker.shared.checkForUpdates()
@@ -111,21 +121,45 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     func showTasksWindow() {
         if tasksController == nil {
             let c = TasksWindowController(store: store, focus: focus)
-            c.onClose = { [weak self] in self?.userWindowDidClose() }
+            // Drop the controller on close so the next open counts as a new
+            // window again; keeping it left the count at zero and the reopened
+            // window without a Dock icon or a place in ⌘Tab.
+            c.onClose = { [weak self] in
+                self?.tasksController = nil
+                self?.userWindowDidClose()
+            }
             tasksController = c
             bumpUserWindowCount()
         }
         tasksController?.show()
     }
 
-    func showSettingsWindow() {
+    func showSettingsWindow(_ page: SettingsPageID? = nil) {
         if settingsController == nil {
             let c = SettingsWindowController(store: store)
-            c.onClose = { [weak self] in self?.userWindowDidClose() }
+            c.onClose = { [weak self] in
+                self?.settingsController = nil
+                self?.userWindowDidClose()
+            }
             settingsController = c
             bumpUserWindowCount()
         }
-        settingsController?.show()
+        settingsController?.show(page)
+    }
+
+    private func applyHotkey(_ enabled: Bool) {
+        if enabled {
+            let ok = hotkey.register(
+                keyCode: UInt32(kVK_Space),
+                modifiers: UInt32(cmdKey | shiftKey)
+            ) { [weak self] in
+                self?.focus.toggleStartStop()
+            }
+            FocusMenuState.shared.hotkeyRegistered = ok
+        } else {
+            hotkey.unregister()
+            FocusMenuState.shared.hotkeyRegistered = false
+        }
     }
 
     private func bumpUserWindowCount() {
