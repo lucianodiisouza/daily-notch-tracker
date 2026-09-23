@@ -26,7 +26,7 @@ final class TasksWindowController: NSObject, NSWindowDelegate {
 
             let win = NSWindow(
                 contentRect: NSRect(x: 0, y: 0, width: 760, height: 480),
-                styleMask: [.titled, .closable, .fullSizeContentView],
+                styleMask: [.titled, .closable, .miniaturizable, .resizable, .fullSizeContentView],
                 backing: .buffered, defer: false)
             win.isReleasedWhenClosed = false   // ARC owns the window; avoid AppKit's extra release on close
             win.title = "Tasks"
@@ -37,11 +37,12 @@ final class TasksWindowController: NSObject, NSWindowDelegate {
             win.isMovableByWindowBackground = false
             win.backgroundColor = NSColor.black
             win.contentView = NSHostingView(rootView: root)
+            win.contentMinSize = NSSize(width: 760, height: 480)
             win.delegate = self
             window = win
         }
         centerOnActiveScreen()
-        NSApp.activate(ignoringOtherApps: true)
+        NSApp.activate()
         window?.makeKeyAndOrderFront(nil)
     }
 

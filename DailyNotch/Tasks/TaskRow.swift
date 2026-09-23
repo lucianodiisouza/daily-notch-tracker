@@ -1,6 +1,6 @@
 import SwiftUI
 
-/// A row in the Tasks window: checkbox, title, due chip, estimate, and
+/// A row in the Tasks window: checkbox, title, estimate, and
 /// start / delete controls. Tapping the row opens the task's detail sheet.
 /// Drag handle in the corner is the only draggable area.
 struct TaskRow: View {
@@ -34,6 +34,7 @@ struct TaskRow: View {
                     .foregroundStyle(Theme.textPrimary)
                     .strikethrough(task.isDone)
                     .lineLimit(1)
+                    .help(task.title)
                 if !task.notes.isEmpty {
                     Text(task.notes)
                         .font(.system(size: 11))
@@ -46,10 +47,6 @@ struct TaskRow: View {
 
             Spacer(minLength: 8)
 
-            if let date = task.scheduledDate {
-                chip(icon: "calendar", text: Calendar.current.isDateInToday(date)
-                     ? "Today" : date.formatted(.dateTime.month().day()))
-            }
             // Inline time editor — tapping opens the popover, changes persist
             // back to the store immediately. Six presets keep the popover
             // from clipping the last chip.
@@ -102,16 +99,6 @@ struct TaskRow: View {
                 store.update(updated)
             }
         )
-    }
-
-    private func chip(icon: String, text: String) -> some View {
-        HStack(spacing: 4) {
-            Image(systemName: icon).font(.system(size: 9))
-            Text(text).font(.system(size: 11))
-        }
-        .foregroundStyle(Theme.textSecondary)
-        .padding(.horizontal, 8).padding(.vertical, 4)
-        .background(Color.white.opacity(0.06), in: Capsule())
     }
 
     private func iconButton(_ icon: String, bg: Color, fg: Color = .white,

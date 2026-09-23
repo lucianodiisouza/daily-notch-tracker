@@ -4,11 +4,14 @@ import SwiftUI
 /// Layout notes:
 /// - Two-letter weekday labels so Saturday and Sunday don't both read "S".
 /// - Today gets a tiny accent dot under the number, so it's visible even
-///   when it isn't the selected day.
+///   when it isn't the selected day. Other days with unfinished tasks get a
+///   gray one, so planned days stand out at a glance.
 /// - The grid uses indexed IDs (not `Date?.self`) so the leading empty
 ///   cells don't collide and get deduped by SwiftUI's diff.
 struct CalendarView: View {
     @Binding var selectedDate: Date
+    /// Start-of-day dates that have at least one unfinished task.
+    var busyDays: Set<Date> = []
     @State private var visibleMonth: Date = Date()
 
     private let cal = Calendar.current
@@ -60,10 +63,11 @@ struct CalendarView: View {
                 Text("\(cal.component(.day, from: day))")
                     .font(.system(size: 12, weight: isToday ? .bold : .regular))
                     .foregroundStyle(isSelected ? .white : Theme.textPrimary)
-                // Today marker: tiny accent dot only when the cell isn't
-                // already filled with the selected-color circle.
+                // Today marker: tiny accent dot; busy days get a gray one.
+                // Hidden under the selected-color circle.
                 Circle()
-                    .fill(isToday && !isSelected ? Theme.accent : .clear)
+                    .fill(dotColor(isToday: isToday, isBusy: busyDays.contains(cal.startOfDay(for: day)),
+                                   isSelected: isSelected))
                     .frame(width: dotSize, height: dotSize)
             }
             .frame(maxWidth: .infinity, minHeight: cellHeight)
@@ -75,6 +79,12 @@ struct CalendarView: View {
             .contentShape(Rectangle())
         }
         .buttonStyle(.plain)
+    }
+
+    private func dotColor(isToday: Bool, isBusy: Bool, isSelected: Bool) -> Color {
+        if isSelected { return isBusy ? .white.opacity(0.8) : .clear }
+        if isToday { return Theme.accent }
+        return isBusy ? Theme.textSecondary : .clear
     }
 
     private func navButton(_ icon: String, _ action: @escaping () -> Void) -> some View {

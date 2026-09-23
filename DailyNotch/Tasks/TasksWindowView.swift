@@ -14,7 +14,6 @@ struct TasksWindowView: View {
     @State private var draftTitle = ""
     @State private var draftNotes = ""
     @State private var editingTask: Task?
-    @State private var showSettings = false
 
     // Focus management for the add-task form. Set to true when the form
     // appears so the user can start typing the title without a second click.
@@ -31,6 +30,12 @@ struct TasksWindowView: View {
 
     enum Tab: String, CaseIterable { case day = "Day", unscheduled = "Unscheduled" }
 
+    /// Days with unfinished tasks, for the dots in the month grid.
+    private var busyDays: Set<Date> {
+        let cal = Calendar.current
+        return Set(store.tasks.lazy.filter { !$0.isDone }.compactMap { $0.scheduledDate.map(cal.startOfDay) })
+    }
+
     private var listedTasks: [Task] {
         tab == .day ? store.tasks(on: selectedDate) : store.unscheduled
     }
@@ -44,7 +49,7 @@ struct TasksWindowView: View {
                         .font(.system(size: 14, weight: .semibold))
                         .foregroundStyle(Theme.textPrimary)
                     Spacer()
-                    Button { showSettings = true } label: {
+                    Button { AppDelegate.shared?.showSettingsWindow() } label: {
                         Image(systemName: "gearshape")
                             .font(.system(size: 12, weight: .semibold))
                             .foregroundStyle(Theme.textSecondary)
@@ -54,9 +59,10 @@ struct TasksWindowView: View {
                     .buttonStyle(.plain)
                     .help("Settings")
                 }
-                CalendarView(selectedDate: $selectedDate)
+                CalendarView(selectedDate: $selectedDate, busyDays: busyDays)
                 Spacer()
                 Button("Today") { selectedDate = Date() }
+                    .keyboardShortcut("t")
                     .buttonStyle(.plain)
                     .font(.system(size: 12, weight: .medium))
                     .foregroundStyle(Theme.textSecondary)
@@ -82,10 +88,6 @@ struct TasksWindowView: View {
             TaskDetailView(task: task)
                 .environmentObject(store)
                 .environmentObject(focus)
-        }
-        .sheet(isPresented: $showSettings) {
-            SettingsView()
-                .environmentObject(store)
         }
         .onAppear {
             consumePendingOpen()
@@ -145,14 +147,23 @@ struct TasksWindowView: View {
                 Button {
                     withAnimation { showAddForm = true }
                 } label: {
-                    Text("Add a task")
-                        .font(.system(size: 13))
-                        .foregroundStyle(Theme.textSecondary)
-                        .frame(maxWidth: .infinity, alignment: .leading)
-                        .padding(.vertical, 8)
-                        .contentShape(Rectangle())
+                    HStack(spacing: 6) {
+                        Image(systemName: "plus")
+                            .font(.system(size: 11, weight: .semibold))
+                        Text("Add a task")
+                            .font(.system(size: 13))
+                        Spacer()
+                        Text("⌘N")
+                            .font(.system(size: 11, weight: .medium, design: .rounded))
+                            .foregroundStyle(Theme.textSecondary.opacity(0.7))
+                    }
+                    .foregroundStyle(Theme.textSecondary)
+                    .frame(maxWidth: .infinity, alignment: .leading)
+                    .padding(.vertical, 8)
+                    .contentShape(Rectangle())
                 }
                 .buttonStyle(.plain)
+                .keyboardShortcut("n")
             }
         }
     }
