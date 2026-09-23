@@ -22,8 +22,12 @@
     <string>$(MACOSX_DEPLOYMENT_TARGET)</string>
     <key>LSUIElement</key>
     <true/>
+    <key>LSApplicationCategoryType</key>
+    <string>public.app-category.productivity</string>
+    <key>ITSAppUsesNonExemptEncryption</key>
+    <false/>
     <key>NSHumanReadableCopyright</key>
-    <string>MIT Licensed</string>
+    <string>© 2026 Luciano de Souza. MIT License.</string>
     <key>NSCalendarsFullAccessUsageDescription</key>
     <string>DailyNotch shows today's events next to your tasks. It only reads your calendar and never writes to it.</string>
     <key>NSCalendarsUsageDescription</key>

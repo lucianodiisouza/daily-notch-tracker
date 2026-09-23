@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+	<!-- Required by the Mac App Store. Everything DailyNotch does (a panel over the notch, a Carbon hotkey,
+	     local notifications, launch at login) works inside the sandbox. -->
+	<key>com.apple.security.app-sandbox</key>
+	<true/>
+	<!-- Read-only calendar events next to the day's tasks. -->
+	<key>com.apple.security.personal-information.calendars</key>
+	<true/>
+	<!-- The GitHub release check in the direct-download build. The App Store build compiles it out. -->
+	<key>com.apple.security.network.client</key>
+	<true/>
+</dict>
+</plist>

@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+	<!-- Builds before 1.0 ran outside the sandbox and kept their data in ~/Library/Application Support/DailyNotch.
+	     macOS moves that folder into the sandbox container on the first sandboxed launch, so no task is lost. -->
+	<key>Move</key>
+	<array>
+		<string>${ApplicationSupport}/DailyNotch</string>
+	</array>
+</dict>
+</plist>
