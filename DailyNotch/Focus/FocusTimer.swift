@@ -13,7 +13,16 @@ final class FocusTimer: ObservableObject {
 
     private var timer: Timer?
     private var startedAt: Date?
+    /// Wall-clock moment the running block ends. The countdown is derived from
+    /// it on every tick, so it stays right across sleep, App Nap and a busy
+    /// main thread (a plain "minus one per tick" counter froze while the Mac
+    /// slept). `nil` while paused or idle.
+    private var endsAt: Date?
     private unowned let store: Store
+
+    /// Aborted blocks shorter than this are not recorded, so starting a task by
+    /// mistake and stopping it right away doesn't light up the activity grid.
+    static let minimumRecordedSeconds: TimeInterval = 60
 
     init(store: Store) { self.store = store }
 
@@ -58,25 +67,36 @@ final class FocusTimer: ObservableObject {
 
     func pause() {
         guard state == .running else { return }
+        updateRemaining()
         state = .paused
+        endsAt = nil
         timer?.invalidate()
         timer = nil
     }
 
     private func resume() {
         state = .running
+        endsAt = Date().addingTimeInterval(remaining)
         timer?.invalidate()
         let t = Timer(timeInterval: 1.0, repeats: true) { [weak self] _ in
             MainActor.assumeIsolated { self?.tick() }
         }
+        t.tolerance = 0.1
         RunLoop.main.add(t, forMode: .common)
         timer = t
     }
 
     private func tick() {
         guard state == .running else { return }
-        remaining = max(0, remaining - 1)
+        updateRemaining()
         if remaining <= 0 { complete() }
+    }
+
+    /// Re-derive `remaining` from the deadline, whole seconds so the label and
+    /// the progress line move in clean steps.
+    private func updateRemaining() {
+        guard let endsAt else { return }
+        remaining = max(0, endsAt.timeIntervalSinceNow.rounded())
     }
 
     private func complete() {
@@ -131,9 +151,13 @@ final class FocusTimer: ObservableObject {
 
     private func finishSession(completed: Bool) {
         guard let startedAt else { return }
+        updateRemaining()
+        // Time actually spent focusing: paused stretches don't count.
+        let focused = completed ? total : total - remaining
+        guard completed || focused >= Self.minimumRecordedSeconds else { return }
         let session = FocusSession(taskId: activeTask?.id,
                                    startedAt: startedAt,
-                                   endedAt: Date(),
+                                   endedAt: startedAt.addingTimeInterval(focused),
                                    completed: completed)
         store.recordSession(session)
     }
@@ -146,5 +170,6 @@ final class FocusTimer: ObservableObject {
         total = 0
         activeTask = nil
         startedAt = nil
+        endsAt = nil
     }
 }
